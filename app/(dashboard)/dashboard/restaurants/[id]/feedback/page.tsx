@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { requireBusinessAccess } from "@/lib/dal";
 import { getBusinessByIdForOwner } from "@/lib/queries/businesses";
 import { listFeedbackForRestaurant } from "@/lib/queries/feedback";
+import { listResponseTemplatesForBusiness } from "@/lib/queries/response-templates";
 import { RatingStars } from "@/components/dashboard/rating-stars";
 import { FeedbackFilterBar } from "@/components/dashboard/feedback-filter-bar";
 import { FeedbackPagination } from "@/components/dashboard/feedback-pagination";
+import { FeedbackReplyCopy } from "@/components/dashboard/feedback-reply-copy";
 import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
 import { absoluteTime, relativeTime } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,6 +51,8 @@ export default async function RestaurantFeedbackPage({
     period,
   });
 
+  const templates = await listResponseTemplatesForBusiness(id);
+
   const filtered = rating !== null;
   const windowed = period !== "30d";
   const windowLabel = periodLabel(period).toLowerCase();
@@ -65,7 +69,15 @@ export default async function RestaurantFeedbackPage({
       </div>
 
       <header className="space-y-2">
-        <h1 className="font-serif text-3xl tracking-tight">Feedback</h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h1 className="font-serif text-3xl tracking-tight">Feedback</h1>
+          <Link
+            href={`/dashboard/restaurants/${business.id}/templates`}
+            className="rounded-sm text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+          >
+            Manage reply templates →
+          </Link>
+        </div>
         <p className="tabular-nums text-sm text-muted-foreground">
           {result.total === 0
             ? filtered || windowed
@@ -145,11 +157,21 @@ export default async function RestaurantFeedbackPage({
                         {relativeTime(row.created_at)}
                       </time>
                     </div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                      {row.campaign
-                        ? `${row.campaign.name} · ${row.campaign.source_type}`
-                        : "no campaign"}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                        {row.campaign
+                          ? `${row.campaign.name} · ${row.campaign.source_type}`
+                          : "no campaign"}
+                      </p>
+                      <FeedbackReplyCopy
+                        templates={templates}
+                        context={{
+                          contactName: row.contact_name ?? null,
+                          rating: row.rating,
+                          restaurantName: business.name,
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {row.feedback_text ? (
