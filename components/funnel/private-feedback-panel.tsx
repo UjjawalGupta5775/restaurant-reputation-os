@@ -98,12 +98,23 @@ export function PrivateFeedbackPanel({
         </div>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="feedbackText">What should we know?</Label>
+            <Label htmlFor="feedbackText">
+              What should we know?{" "}
+              <abbr
+                title="Required"
+                aria-label="required"
+                className="text-muted-foreground no-underline"
+              >
+                *
+              </abbr>
+            </Label>
             <Textarea
               id="feedbackText"
               name="feedbackText"
               rows={4}
               maxLength={2000}
+              required
+              aria-required="true"
               onFocus={flagInteraction}
               onChange={flagInteraction}
               placeholder="Tell the owner anything they should hear directly."
@@ -121,10 +132,7 @@ export function PrivateFeedbackPanel({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="contactName">
-                Name{" "}
-                <span className="text-muted-foreground">(optional)</span>
-              </Label>
+              <Label htmlFor="contactName">Name</Label>
               <Input
                 id="contactName"
                 name="contactName"
@@ -136,10 +144,7 @@ export function PrivateFeedbackPanel({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactPhone">
-                Phone{" "}
-                <span className="text-muted-foreground">(optional)</span>
-              </Label>
+              <Label htmlFor="contactPhone">Phone</Label>
               <Input
                 id="contactPhone"
                 name="contactPhone"
@@ -151,6 +156,9 @@ export function PrivateFeedbackPanel({
               />
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Only the message is required.
+          </p>
           {state?.error && (
             <p role="alert" className="text-sm text-destructive">
               {state.error}
