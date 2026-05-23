@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import * as Sentry from "@sentry/nextjs";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,7 +55,13 @@ export async function checkRateLimit(bucket: Bucket): Promise<RateLimitResult> {
     if (error || !data || data.length === 0) {
       // Soft-fail: never take down the funnel because the rate-limit
       // table is unhappy. Allow the request through but log so we notice.
-      if (error) console.warn("[rate-limit] rpc error, allowing:", error.message);
+      if (error) {
+        console.warn("[rate-limit] rpc error, allowing:", error.message);
+        Sentry.captureMessage(`rate-limit rpc error: ${error.message}`, {
+          level: "warning",
+          tags: { area: "rate_limit", bucket },
+        });
+      }
       return { allowed: true };
     }
     const row = data[0] as { allowed: boolean; retry_after_seconds: number };
@@ -62,6 +69,7 @@ export async function checkRateLimit(bucket: Bucket): Promise<RateLimitResult> {
     return { allowed: false, retryAfterSeconds: row.retry_after_seconds };
   } catch (err) {
     console.warn("[rate-limit] threw, allowing:", err);
+    Sentry.captureException(err, { tags: { area: "rate_limit", bucket } });
     return { allowed: true };
   }
 }

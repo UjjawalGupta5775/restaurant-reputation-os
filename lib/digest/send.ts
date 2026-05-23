@@ -1,5 +1,6 @@
 import "server-only";
 
+import * as Sentry from "@sentry/nextjs";
 import type { RenderedEmail } from "./email";
 
 export type SendResult = { ok: true; id: string } | { ok: false; error: string };
@@ -35,12 +36,18 @@ export async function sendDigest(params: {
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      return { ok: false, error: `Resend ${res.status}: ${body.slice(0, 200)}` };
+      const error = `Resend ${res.status}: ${body.slice(0, 200)}`;
+      Sentry.captureMessage(error, {
+        level: "error",
+        tags: { area: "digest_send", status: String(res.status) },
+      });
+      return { ok: false, error };
     }
 
     const data = (await res.json().catch(() => ({}))) as { id?: string };
     return { ok: true, id: data.id ?? "unknown" };
   } catch (err) {
+    Sentry.captureException(err, { tags: { area: "digest_send" } });
     return {
       ok: false,
       error: err instanceof Error ? err.message : "unknown send error",

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireSuperAdmin } from "@/lib/dal";
@@ -83,8 +84,10 @@ async function emitPlatformEvent(
       event_type: eventType,
       metadata_json: metadata,
     });
-  } catch {
-    // Analytics never blocks a platform action.
+  } catch (err) {
+    // Analytics never blocks a platform action — but surface the failure
+    // to Sentry so we know if the insert is persistently broken.
+    Sentry.captureException(err, { tags: { area: "analytics_insert", event: eventType } });
   }
 }
 

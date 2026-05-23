@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { FUNNEL_EVENTS, type FunnelEvent } from "@/lib/funnel/events";
 import { checkRateLimit } from "@/lib/funnel/rate-limit";
@@ -40,7 +41,9 @@ export async function trackEvent(input: TrackEventInput): Promise<void> {
       event_type: parsed.data.event,
       metadata_json: parsed.data.metadata ?? {},
     });
-  } catch {
-    // Analytics must never break the funnel. Swallow.
+  } catch (err) {
+    // Analytics must never break the funnel. Swallow for UX, surface to
+    // Sentry so a persistent insert failure doesn't go invisible.
+    Sentry.captureException(err, { tags: { area: "analytics_insert" } });
   }
 }

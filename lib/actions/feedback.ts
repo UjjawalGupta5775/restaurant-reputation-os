@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/funnel/rate-limit";
 
@@ -144,8 +145,11 @@ export async function submitFeedback(
         ...(data.elapsedMs !== undefined ? { elapsedMs: data.elapsedMs } : {}),
       },
     });
-  } catch {
-    // analytics-only failure; ignore
+  } catch (err) {
+    // Feedback row already wrote; only the analytics emit failed. Don't
+    // bubble to the customer but tell Sentry so a persistent insert
+    // failure doesn't go invisible.
+    Sentry.captureException(err, { tags: { area: "analytics_insert", event: "feedback_submitted" } });
   }
 
   return { ok: true };
