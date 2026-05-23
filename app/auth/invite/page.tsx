@@ -24,35 +24,25 @@ export default function InvitePage() {
   );
   const [sessionState, setSessionState] = useState<SessionState>("loading");
 
-  // Invite links use the implicit hash flow: the access token arrives in
-  // location.hash. The browser client's detectSessionInUrl: true (default)
-  // parses it and writes cookies. We poll briefly to confirm the cookie
-  // session exists before exposing the password form.
+  // The server route /auth/confirm verifies the OTP and sets cookies before
+  // redirecting here. We just confirm a session exists. Hash-based legacy
+  // links (#access_token=...) are also handled by detectSessionInUrl in the
+  // browser client as a fallback during the transition.
   useEffect(() => {
     const supabase = createClient();
     let cancelled = false;
-    let tries = 0;
 
     const check = async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getUser();
       if (cancelled) return;
-      if (data.session) {
-        setSessionState("ready");
-        return;
-      }
-      tries += 1;
-      if (tries > 20) {
-        setSessionState("missing");
-        return;
-      }
-      setTimeout(check, 150);
+      setSessionState(data.user ? "ready" : "missing");
     };
 
     check();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-        setSessionState("ready");
+        check();
       }
     });
 

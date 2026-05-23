@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn, type AuthState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  invite_expired:
+    "That invite link has expired or was already used. Ask your admin to send a new one.",
+  auth_callback_failed:
+    "Sign-in link is no longer valid. Try signing in below.",
+};
+
+function UrlError() {
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
+  const urlMessage = urlError ? ERROR_MESSAGES[urlError] : null;
+  if (!urlMessage) return null;
+  return (
+    <p role="alert" className="text-sm text-destructive">
+      {urlMessage}
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState<AuthState, FormData>(
@@ -31,6 +51,9 @@ export default function LoginPage() {
         </CardHeader>
         <form action={action}>
           <CardContent className="space-y-4">
+            <Suspense fallback={null}>
+              <UrlError />
+            </Suspense>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

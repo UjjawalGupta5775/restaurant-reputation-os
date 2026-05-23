@@ -38,7 +38,9 @@ function collectFieldErrors(error: z.ZodError) {
 // not accept a server-side email filter, so we fetch the first page (100
 // users) and match locally. Adequate for current scale; revisit when the
 // user count crosses a few hundred.
-async function findUserIdByEmail(email: string): Promise<string | null> {
+async function findUserByEmail(
+  email: string,
+): Promise<{ id: string; lastSignInAt: string | null } | null> {
   const lowered = email.toLowerCase();
   const { data, error } = await supabaseAdmin.auth.admin.listUsers({
     page: 1,
@@ -48,7 +50,8 @@ async function findUserIdByEmail(email: string): Promise<string | null> {
   const match = data.users.find(
     (u) => (u.email ?? "").toLowerCase() === lowered,
   );
-  return match?.id ?? null;
+  if (!match) return null;
+  return { id: match.id, lastSignInAt: match.last_sign_in_at ?? null };
 }
 
 async function emitPlatformEvent(
@@ -101,11 +104,28 @@ export async function inviteOwner(
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     "http://localhost:3000";
-  // Invite emails use the implicit hash flow (PKCE is not supported by
-  // inviteUserByEmail). Land directly on the client invite page, which
-  // detects the access token from the URL hash and sets cookies before
-  // the user submits a password.
-  const inviteRedirect = `${appUrl}/auth/invite`;
+  // Invite email landing goes through our /auth/confirm route handler,
+  // which calls verifyOtp server-side. This avoids email-scanner prefetches
+  // consuming the one-shot token at Supabase's /auth/v1/verify endpoint
+  // before the human can click. ?next= routes the user to password setup.
+  const inviteRedirect = `${appUrl}/auth/confirm?next=/auth/invite`;
+
+  // If this email already has an auth user but never signed in (still
+  // pending invite), wipe the orphan and re-invite fresh so Supabase
+  // sends a new email. Deleting the auth user cascades to app_users
+  // (FK on user_id) — business_members was already removed if the admin
+  // used the "Remove owner" UI.
+  const existing = await findUserByEmail(email);
+  if (existing && existing.lastSignInAt === null) {
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
+      existing.id,
+    );
+    if (deleteError) {
+      return {
+        error: `Could not reset pending invite: ${deleteError.message}`,
+      };
+    }
+  }
 
   const { data: invited, error: inviteError } =
     await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
@@ -116,8 +136,8 @@ export async function inviteOwner(
     userId = invited.user.id;
     invitedFresh = true;
   } else if (inviteError) {
-    // Existing user: Supabase returns email_exists / user_already_exists
-    // depending on version. Look up and skip the email.
+    // Existing user who HAS signed in before: just add the membership,
+    // no re-invite email needed (they already have a working password).
     const code = (inviteError as { code?: string }).code ?? "";
     const msg = inviteError.message?.toLowerCase() ?? "";
     const alreadyExists =
@@ -130,13 +150,14 @@ export async function inviteOwner(
       return { error: inviteError.message };
     }
 
-    userId = await findUserIdByEmail(email);
-    if (!userId) {
+    const refetch = await findUserByEmail(email);
+    if (!refetch) {
       return {
         error:
           "User exists but could not be located. Ask them to sign in first, then retry.",
       };
     }
+    userId = refetch.id;
   }
 
   if (!userId) {
