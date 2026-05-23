@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionRole } from "@/lib/dal";
 import { signOut } from "@/lib/actions/auth";
@@ -20,9 +21,15 @@ export default async function DashboardLayout({
             Reputation OS
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
+            <span className="hidden text-sm text-muted-foreground sm:inline">
               {session.email ?? session.userId}
             </span>
+            <Link
+              href="/dashboard/settings"
+              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Settings
+            </Link>
             <form action={signOut}>
               <Button variant="ghost" size="sm" type="submit">
                 Sign out
