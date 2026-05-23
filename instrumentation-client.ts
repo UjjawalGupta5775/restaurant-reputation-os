@@ -15,3 +15,6 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
       process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
   });
 }
+
+// Exported regardless of DSN — Sentry's hook is a no-op when init didn't run.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
