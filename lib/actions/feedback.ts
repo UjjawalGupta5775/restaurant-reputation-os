@@ -1,0 +1,117 @@
+"use server";
+
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+
+const feedbackSchema = z.object({
+  businessId: z.uuid("Invalid business id."),
+  campaignId: z
+    .union([z.uuid(), z.literal("")])
+    .optional()
+    .transform((v) => (v && v !== "" ? v : undefined)),
+  sessionId: z.uuid("Invalid session id."),
+  rating: z.coerce.number().int().min(1).max(5),
+  feedbackText: z
+    .string()
+    .trim()
+    .max(2000, "Feedback must be 2000 characters or fewer.")
+    .optional()
+    .transform((v) => (v && v !== "" ? v : undefined)),
+  contactName: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .transform((v) => (v && v !== "" ? v : undefined)),
+  contactPhone: z
+    .string()
+    .trim()
+    .max(40)
+    .optional()
+    .transform((v) => (v && v !== "" ? v : undefined)),
+});
+
+export type FeedbackFormState =
+  | {
+      ok?: boolean;
+      error?: string;
+      fieldErrors?: Record<string, string[]>;
+    }
+  | undefined;
+
+function collectFieldErrors(error: z.ZodError) {
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of error.issues) {
+    const key = issue.path[0];
+    if (typeof key !== "string") continue;
+    (fieldErrors[key] ??= []).push(issue.message);
+  }
+  return fieldErrors;
+}
+
+export async function submitFeedback(
+  _prev: FeedbackFormState,
+  formData: FormData,
+): Promise<FeedbackFormState> {
+  const parsed = feedbackSchema.safeParse({
+    businessId: formData.get("businessId"),
+    campaignId: formData.get("campaignId") ?? undefined,
+    sessionId: formData.get("sessionId"),
+    rating: formData.get("rating"),
+    feedbackText: formData.get("feedbackText"),
+    contactName: formData.get("contactName"),
+    contactPhone: formData.get("contactPhone"),
+  });
+
+  if (!parsed.success) {
+    return { fieldErrors: collectFieldErrors(parsed.error) };
+  }
+
+  const data = parsed.data;
+
+  if (!data.feedbackText && !data.contactName && !data.contactPhone) {
+    return {
+      fieldErrors: {
+        feedbackText: ["Add a comment or contact info before sending."],
+      },
+    };
+  }
+
+  const supabase = await createClient();
+
+  const { error: insertError } = await supabase
+    .from("feedback_submissions")
+    .insert({
+      business_id: data.businessId,
+      campaign_id: data.campaignId ?? null,
+      rating: data.rating,
+      feedback_text: data.feedbackText ?? null,
+      contact_name: data.contactName ?? null,
+      contact_phone: data.contactPhone ?? null,
+    });
+
+  if (insertError) {
+    return { error: "Could not send feedback. Please try again." };
+  }
+
+  // Same-action emit so feedback_submitted only fires when the row actually
+  // wrote. Failure here is silent — the customer-visible outcome already
+  // succeeded.
+  try {
+    await supabase.from("analytics_events").insert({
+      business_id: data.businessId,
+      campaign_id: data.campaignId ?? null,
+      session_id: data.sessionId,
+      event_type: "feedback_submitted",
+      metadata_json: {
+        rating: data.rating,
+        hasText: Boolean(data.feedbackText),
+        hasContact: Boolean(data.contactName || data.contactPhone),
+      },
+    });
+  } catch {
+    // analytics-only failure; ignore
+  }
+
+  return { ok: true };
+}

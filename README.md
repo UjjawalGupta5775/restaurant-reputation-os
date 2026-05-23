@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Restaurant Reputation OS
 
-## Getting Started
+QR-based feedback funnel for restaurants. Customers scan a table QR, rate their visit, and choose between leaving a Google review (with assistance — never auto-submitted) or sending private feedback to the owner. Owners get a dashboard with rating funnel, daily scan volume, and a private feedback inbox.
 
-First, run the development server:
+**Hard product rules:**
+- The platform never auto-submits reviews to Google. The customer controls submission and can edit suggested text.
+- Both actions — "Leave Google Review" and "Send Private Feedback" — are always visible regardless of rating.
+- No incentives conditioned on positive sentiment.
+
+## Stack
+
+- Next.js 16 (App Router, Turbopack) · React 19 · TypeScript
+- Tailwind v4 · shadcn/ui (base-nova preset, neutral base)
+- Supabase: Postgres + RLS + Auth + Storage
+- Deployed on Vercel
+
+## Local development
 
 ```bash
+cp .env.local.example .env.local
+# fill in Supabase URL, anon key, service role key
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Migrations live in `supabase/migrations/`. Apply them in order against your Supabase project (SQL editor or `supabase db push`).
 
-## Learn More
+```
+0001_init.sql              — base schema (businesses, campaigns, feedback, analytics)
+0002a_rbac_schema.sql      — app_users + business_members
+0002b_rbac_backfill.sql    — backfill from existing owner_user_id rows
+0003_rls_swap.sql          — swap RLS policies to RBAC
+0004_drop_owner_user_id.sql — drop legacy column
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Used by | Required |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | client + server | ✓ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client + server | ✓ |
+| `SUPABASE_SERVICE_ROLE_KEY` | server-only (`lib/supabase/admin.ts`) | ✓ |
+| `NEXT_PUBLIC_APP_URL` | invite redirect URLs | ✓ |
+| `POSTGRES_URL` | local verification scripts only | dev-only |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment (Vercel)
 
-## Deploy on Vercel
+1. Push this repo to GitHub.
+2. Import the repo into Vercel.
+3. Set the four required env vars above (Vercel → Project → Settings → Environment Variables).
+4. Set `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://your-app.vercel.app`).
+5. Vercel auto-builds on every push to `master`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authentication model (Phase 4A RBAC)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Super-admin** seats restaurant owners via invite-only email flow. No public self-signup.
+- **Owners** see only their own business via RLS (`has_business_access` helper).
+- **Anonymous customers** can insert into `feedback_submissions` and `analytics_events` (firehose); cannot read anything.
+
+Architectural detail in `PROJECT_CONTEXT.md` (parent directory).
