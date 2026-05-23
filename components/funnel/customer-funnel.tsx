@@ -35,8 +35,12 @@ export function CustomerFunnel({ business, campaign }: Props) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const scanFired = useRef(false);
 
-  // sessionStorage isn't available during SSR; initialize on mount.
+  // sessionStorage isn't available during SSR; initialize on mount. The
+  // cascading-render lint is intentional here — we need the post-hydration
+  // render to pick up the client-only value, and trying to read it during
+  // useState's initializer breaks SSR.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSessionId(getSessionId());
   }, []);
 
