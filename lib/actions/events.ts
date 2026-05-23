@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { FUNNEL_EVENTS, type FunnelEvent } from "@/lib/funnel/events";
+import { checkRateLimit } from "@/lib/funnel/rate-limit";
 
 const trackSchema = z.object({
   businessId: z.uuid(),
@@ -23,6 +24,12 @@ export type TrackEventInput = {
 export async function trackEvent(input: TrackEventInput): Promise<void> {
   const parsed = trackSchema.safeParse(input);
   if (!parsed.success) return;
+
+  // Silent drop when over the bucket: events are fire-and-forget from the
+  // client and the legitimate UX never inspects the return value, so a
+  // bot hammering the action gets no signal that we dropped its writes.
+  const rl = await checkRateLimit("event");
+  if (!rl.allowed) return;
 
   try {
     const supabase = await createClient();

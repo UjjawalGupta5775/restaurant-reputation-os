@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/funnel/rate-limit";
 
 const feedbackSchema = z.object({
   businessId: z.uuid("Invalid business id."),
@@ -53,6 +54,16 @@ export async function submitFeedback(
   _prev: FeedbackFormState,
   formData: FormData,
 ): Promise<FeedbackFormState> {
+  // Rate limit before any work (including the honeypot check) — both
+  // honeypot-tripping bots and legit submissions count toward the same
+  // bucket. If you're hammering, you're hammering, regardless of intent.
+  const rl = await checkRateLimit("feedback");
+  if (!rl.allowed) {
+    return {
+      error: "Too many submissions from this network. Please try again in a few minutes.",
+    };
+  }
+
   // Honeypot — a hidden "website" field rendered off-screen. Real users
   // never fill it; naive form-spam bots usually do. If non-empty, pretend
   // the submission succeeded (so the bot doesn't retry with a workaround)
