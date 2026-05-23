@@ -144,6 +144,6 @@
     display: none;
   }
   details[data-funnel-accordion]:not([open]) > :not(summary) {
-    display: revert;
+    display: block;
   }
 }
