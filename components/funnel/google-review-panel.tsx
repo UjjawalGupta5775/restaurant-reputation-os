@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -162,25 +163,6 @@ export function GoogleReviewPanel({
           rows={4}
           className="min-h-24"
         />
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCopy}
-            disabled={text.length === 0}
-            className="h-11 flex-1 px-4 text-sm"
-          >
-            {copied ? "Copied!" : "Copy text"}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleOpen}
-            disabled={noUrl}
-            className="h-11 flex-1 px-4 text-sm"
-          >
-            Copy &amp; open Google
-          </Button>
-        </div>
         {openedReminder && !noUrl && (
           <div
             role="status"
@@ -199,6 +181,25 @@ export function GoogleReviewPanel({
           </p>
         )}
       </CardContent>
+      <CardFooter className="flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleCopy}
+          disabled={text.length === 0}
+          className="min-h-11 w-full flex-1 px-4 text-sm sm:w-auto"
+        >
+          {copied ? "Copied!" : "Copy text"}
+        </Button>
+        <Button
+          type="button"
+          onClick={handleOpen}
+          disabled={noUrl}
+          className="min-h-11 w-full flex-1 px-4 text-sm sm:w-auto"
+        >
+          Copy &amp; open Google
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
