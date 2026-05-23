@@ -168,7 +168,7 @@ export function GoogleReviewPanel({
             variant="outline"
             onClick={handleCopy}
             disabled={text.length === 0}
-            className="flex-1"
+            className="h-11 flex-1 px-4 text-sm"
           >
             {copied ? "Copied!" : "Copy text"}
           </Button>
@@ -176,7 +176,7 @@ export function GoogleReviewPanel({
             type="button"
             onClick={handleOpen}
             disabled={noUrl}
-            className="flex-1"
+            className="h-11 flex-1 px-4 text-sm"
           >
             Copy &amp; open Google
           </Button>

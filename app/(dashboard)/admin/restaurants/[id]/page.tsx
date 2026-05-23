@@ -49,9 +49,19 @@ export default async function AdminRestaurantDetailPage({
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="font-serif text-3xl tracking-tight">
-            {business.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            {business.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={business.logo_url}
+                alt=""
+                className="size-12 rounded-md border object-cover"
+              />
+            )}
+            <h1 className="font-serif text-3xl tracking-tight">
+              {business.name}
+            </h1>
+          </div>
           <div className="flex items-center gap-3 text-sm">
             <Link
               href={`/admin/restaurants/${business.id}/owners`}

@@ -158,7 +158,11 @@ export function PrivateFeedbackPanel({
           )}
         </CardContent>
         <CardFooter>
-          <Button type="submit" disabled={pending} className="w-full">
+          <Button
+            type="submit"
+            disabled={pending}
+            className="h-11 w-full px-4 text-sm"
+          >
             {pending ? "Sending…" : "Send feedback"}
           </Button>
         </CardFooter>

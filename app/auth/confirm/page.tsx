@@ -61,14 +61,27 @@ export default async function ConfirmPage({
     );
   }
 
+  const isRecovery = type === "recovery";
+  const copy = isRecovery
+    ? {
+        title: "Reset your password",
+        description: "Click below to verify your reset link and choose a new password.",
+        body: "Your reset link is ready. Continue to set a new password.",
+        button: "Continue to reset",
+      }
+    : {
+        title: "Welcome aboard",
+        description: "Click below to confirm your email and set up your account.",
+        body: "Your invite is ready. Continue to choose a password.",
+        button: "Continue",
+      };
+
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Welcome aboard</CardTitle>
-          <CardDescription>
-            Click below to confirm your email and set up your account.
-          </CardDescription>
+          <CardTitle className="font-serif text-xl">{copy.title}</CardTitle>
+          <CardDescription>{copy.description}</CardDescription>
         </CardHeader>
         <form action={confirm}>
           <input type="hidden" name="token_hash" value={token_hash} />
@@ -76,12 +89,12 @@ export default async function ConfirmPage({
           <input type="hidden" name="next" value={next ?? "/auth/invite"} />
           <CardContent>
             <p className="font-serif italic text-sm text-muted-foreground">
-              Your invite is ready. Continue to choose a password.
+              {copy.body}
             </p>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full">
-              Continue
+              {copy.button}
             </Button>
           </CardFooter>
         </form>
