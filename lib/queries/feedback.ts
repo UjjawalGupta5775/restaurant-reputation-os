@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { periodRange, type Period } from "@/lib/queries/period";
 
 export type FeedbackRow = {
   id: string;
@@ -20,6 +21,7 @@ export type ListFeedbackOptions = {
   rating?: number;
   page?: number;
   pageSize?: number;
+  period?: Period;
 };
 
 export type FeedbackPage = {
@@ -55,6 +57,11 @@ export async function listFeedbackForRestaurant(
     options.rating <= 5
   ) {
     query = query.eq("rating", options.rating);
+  }
+
+  if (options.period) {
+    const { fromIso, toIso } = periodRange(options.period);
+    query = query.gte("created_at", fromIso).lt("created_at", toIso);
   }
 
   const { data, error, count } = await query

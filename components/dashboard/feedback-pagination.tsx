@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { Period } from "@/lib/queries/period";
 
 type Props = {
   businessId: string;
@@ -9,6 +10,7 @@ type Props = {
   total: number;
   rating: number | null;
   basePath?: string;
+  period?: Period;
 };
 
 export function FeedbackPagination({
@@ -18,6 +20,7 @@ export function FeedbackPagination({
   total,
   rating,
   basePath = "/dashboard",
+  period,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (totalPages <= 1) return null;
@@ -26,6 +29,7 @@ export function FeedbackPagination({
   const hrefFor = (p: number) => {
     const params = new URLSearchParams();
     if (rating) params.set("rating", String(rating));
+    if (period && period !== "30d") params.set("period", period);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return qs ? `${base}?${qs}` : base;

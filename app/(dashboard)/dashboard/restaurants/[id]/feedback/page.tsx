@@ -6,8 +6,10 @@ import { listFeedbackForRestaurant } from "@/lib/queries/feedback";
 import { RatingStars } from "@/components/dashboard/rating-stars";
 import { FeedbackFilterBar } from "@/components/dashboard/feedback-filter-bar";
 import { FeedbackPagination } from "@/components/dashboard/feedback-pagination";
+import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
 import { absoluteTime, relativeTime } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
+import { parsePeriod, periodLabel } from "@/lib/queries/period";
 
 function parseRating(value: string | undefined): number | null {
   if (!value) return null;
@@ -28,12 +30,13 @@ export default async function RestaurantFeedbackPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ rating?: string; page?: string }>;
+  searchParams: Promise<{ rating?: string; page?: string; period?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
   const rating = parseRating(sp.rating);
   const page = parsePage(sp.page);
+  const period = parsePeriod(sp.period);
 
   await requireBusinessAccess(id);
 
@@ -43,9 +46,12 @@ export default async function RestaurantFeedbackPage({
   const result = await listFeedbackForRestaurant(id, {
     rating: rating ?? undefined,
     page,
+    period,
   });
 
   const filtered = rating !== null;
+  const windowed = period !== "30d";
+  const windowLabel = periodLabel(period).toLowerCase();
 
   return (
     <div className="space-y-10">
@@ -62,16 +68,25 @@ export default async function RestaurantFeedbackPage({
         <h1 className="font-serif text-3xl tracking-tight">Feedback</h1>
         <p className="tabular-nums text-sm text-muted-foreground">
           {result.total === 0
-            ? filtered
+            ? filtered || windowed
               ? "No submissions match this filter."
               : "No submissions yet."
             : `${result.total.toLocaleString()} submission${
                 result.total === 1 ? "" : "s"
-              }${filtered ? ` rated ${rating} ★` : ""}.`}
+              }${filtered ? ` rated ${rating} ★` : ""}${
+                windowed ? ` · ${windowLabel}` : ""
+              }.`}
         </p>
       </header>
 
-      <FeedbackFilterBar businessId={business.id} currentRating={rating} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <FeedbackFilterBar
+          businessId={business.id}
+          currentRating={rating}
+          period={period}
+        />
+        <AnalyticsPeriodPicker />
+      </div>
 
       {result.rows.length === 0 ? (
         <Card>
@@ -79,13 +94,25 @@ export default async function RestaurantFeedbackPage({
             <p className="font-serif italic text-base text-muted-foreground max-w-md mx-auto">
               {filtered ? (
                 <>
-                  No customers submitted feedback at {rating} ★ yet. Try a
-                  different filter or view{" "}
+                  No customers submitted feedback at {rating} ★
+                  {windowed ? ` ${windowLabel}` : " yet"}. Try a different
+                  filter or view{" "}
                   <Link
                     href={`/dashboard/restaurants/${business.id}/feedback`}
                     className="underline"
                   >
                     All
+                  </Link>
+                  .
+                </>
+              ) : windowed ? (
+                <>
+                  No submissions {windowLabel}. Try a wider window or view{" "}
+                  <Link
+                    href={`/dashboard/restaurants/${business.id}/feedback`}
+                    className="underline"
+                  >
+                    last 30 days
                   </Link>
                   .
                 </>
@@ -171,6 +198,7 @@ export default async function RestaurantFeedbackPage({
         pageSize={result.pageSize}
         total={result.total}
         rating={rating}
+        period={period}
       />
     </div>
   );
