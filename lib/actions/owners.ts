@@ -40,7 +40,7 @@ function collectFieldErrors(error: z.ZodError) {
 // user count crosses a few hundred.
 async function findUserByEmail(
   email: string,
-): Promise<{ id: string; lastSignInAt: string | null } | null> {
+): Promise<{ id: string } | null> {
   const lowered = email.toLowerCase();
   const { data, error } = await supabaseAdmin.auth.admin.listUsers({
     page: 1,
@@ -51,7 +51,24 @@ async function findUserByEmail(
     (u) => (u.email ?? "").toLowerCase() === lowered,
   );
   if (!match) return null;
-  return { id: match.id, lastSignInAt: match.last_sign_in_at ?? null };
+  return { id: match.id };
+}
+
+async function userHasAnyMembership(userId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin
+    .from("business_members")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+  return (count ?? 0) > 0;
+}
+
+async function userIsSuperAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("app_users")
+    .select("is_super_admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data?.is_super_admin === true;
 }
 
 async function emitPlatformEvent(
@@ -104,26 +121,37 @@ export async function inviteOwner(
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     "http://localhost:3000";
-  // Invite email landing goes through our /auth/confirm route handler,
-  // which calls verifyOtp server-side. This avoids email-scanner prefetches
-  // consuming the one-shot token at Supabase's /auth/v1/verify endpoint
-  // before the human can click. ?next= routes the user to password setup.
+  // Invite email landing routes through our /auth/confirm interstitial
+  // page. The page only calls verifyOtp on form POST, not on initial GET,
+  // so email scanners that prefetch the link cannot consume the one-shot
+  // token. ?next= drives the post-verify redirect to password setup.
   const inviteRedirect = `${appUrl}/auth/confirm?next=/auth/invite`;
 
-  // If this email already has an auth user but never signed in (still
-  // pending invite), wipe the orphan and re-invite fresh so Supabase
-  // sends a new email. Deleting the auth user cascades to app_users
-  // (FK on user_id) — business_members was already removed if the admin
-  // used the "Remove owner" UI.
+  // If this email already has an auth user but holds zero current
+  // business memberships AND isn't the super-admin, it's effectively
+  // orphaned — most often a previous invite that the user never
+  // completed (or where an email link scanner consumed the one-shot
+  // token before the human could click). Wipe and re-invite so Supabase
+  // sends a fresh email. We never delete a super-admin or anyone who
+  // is still an active owner of any business.
+  //
+  // FK cascades from auth.users → app_users and → business_members are
+  // already wired in the 0002 migration, so a clean delete is safe.
   const existing = await findUserByEmail(email);
-  if (existing && existing.lastSignInAt === null) {
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
-      existing.id,
-    );
-    if (deleteError) {
-      return {
-        error: `Could not reset pending invite: ${deleteError.message}`,
-      };
+  if (existing) {
+    const [isAdmin, hasMembership] = await Promise.all([
+      userIsSuperAdmin(existing.id),
+      userHasAnyMembership(existing.id),
+    ]);
+    if (!isAdmin && !hasMembership) {
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
+        existing.id,
+      );
+      if (deleteError) {
+        return {
+          error: `Could not reset pending invite: ${deleteError.message}`,
+        };
+      }
     }
   }
 
