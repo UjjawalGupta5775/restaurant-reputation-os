@@ -10,6 +10,7 @@ type Props = {
   ratings: number;
   googleClicks: number;
   feedback: number;
+  periodLabel: string;
 };
 
 function pct(n: number, d: number): string {
@@ -28,17 +29,18 @@ export function FunnelBars({
   ratings,
   googleClicks,
   feedback,
+  periodLabel,
 }: Props) {
   if (scans === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Funnel (30d)</CardTitle>
+          <CardTitle className="font-serif text-xl">{`Funnel · ${periodLabel}`}</CardTitle>
         </CardHeader>
         <CardContent className="py-6 text-center">
           <p className="font-serif italic text-base text-muted-foreground max-w-sm mx-auto">
-            No scans yet. Print a campaign QR and place it where customers can
-            see it — activity will appear here.
+            No scans in this window. Print a campaign QR and place it where
+            customers can see it — activity will appear here.
           </p>
         </CardContent>
       </Card>
@@ -48,7 +50,7 @@ export function FunnelBars({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-xl">Funnel (30d)</CardTitle>
+        <CardTitle className="font-serif text-xl">{`Funnel · ${periodLabel}`}</CardTitle>
         <p className="text-sm text-muted-foreground">
           Customers fork at the dual-path screen — Google clicks and Feedback
           are parallel paths, not sequential steps.

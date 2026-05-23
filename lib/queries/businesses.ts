@@ -42,6 +42,9 @@ export type OwnerBusiness = {
   slug: string;
   google_review_url: string | null;
   google_place_id: string | null;
+  phone: string | null;
+  address: string | null;
+  hours: string | null;
   created_at: string;
 };
 
@@ -51,7 +54,9 @@ export async function getBusinessByIdForOwner(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("businesses")
-    .select("id, name, slug, google_review_url, google_place_id, created_at")
+    .select(
+      "id, name, slug, google_review_url, google_place_id, phone, address, hours, created_at",
+    )
     .eq("id", id)
     .maybeSingle();
 

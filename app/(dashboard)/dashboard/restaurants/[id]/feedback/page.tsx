@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireBusinessAccess } from "@/lib/dal";
-import { getBusinessByIdForOwner } from "@/lib/queries/businesses";
+import {
+  getBusinessByIdForOwner,
+  listBusinessesForOwner,
+} from "@/lib/queries/businesses";
 import { listFeedbackForRestaurant } from "@/lib/queries/feedback";
 import { RatingStars } from "@/components/dashboard/rating-stars";
 import { FeedbackFilterBar } from "@/components/dashboard/feedback-filter-bar";
 import { FeedbackPagination } from "@/components/dashboard/feedback-pagination";
+import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
 import { absoluteTime, relativeTime } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -40,22 +44,29 @@ export default async function RestaurantFeedbackPage({
   const business = await getBusinessByIdForOwner(id);
   if (!business) notFound();
 
-  const result = await listFeedbackForRestaurant(id, {
-    rating: rating ?? undefined,
-    page,
-  });
+  const [result, restaurants] = await Promise.all([
+    listFeedbackForRestaurant(id, {
+      rating: rating ?? undefined,
+      page,
+    }),
+    listBusinessesForOwner(),
+  ]);
 
   const filtered = rating !== null;
 
   return (
     <div className="space-y-10">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href={`/dashboard/restaurants/${business.id}`}
           className="rounded-sm text-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
         >
           ← Back to {business.name}
         </Link>
+        <RestaurantSwitcher
+          restaurants={restaurants}
+          currentBusinessId={business.id}
+        />
       </div>
 
       <header className="space-y-2">

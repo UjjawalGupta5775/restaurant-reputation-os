@@ -1,30 +1,39 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Plus } from "lucide-react";
 import { getBusinessByIdForOwner } from "@/lib/queries/businesses";
 import { listCampaignsForBusiness } from "@/lib/queries/campaigns";
 import {
   getDailyScans,
   getRestaurantKpis,
 } from "@/lib/queries/analytics";
+import { parsePeriod, periodLabel } from "@/lib/queries/period";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { KpiStrip } from "@/components/dashboard/kpi-strip";
 import { FunnelBars } from "@/components/dashboard/funnel-bars";
 import { DailyScansChart } from "@/components/dashboard/daily-scans-chart";
+import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
 
 export default async function AdminRestaurantDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ period?: string }>;
 }) {
   const { id } = await params;
+  const { period: periodParam } = await searchParams;
+  const period = parsePeriod(periodParam);
+  const label = periodLabel(period);
+
   const business = await getBusinessByIdForOwner(id);
   if (!business) notFound();
 
   const [campaigns, kpis, daily] = await Promise.all([
     listCampaignsForBusiness(id),
-    getRestaurantKpis(id),
-    getDailyScans(id),
+    getRestaurantKpis(id, period),
+    getDailyScans(id, period),
   ]);
 
   return (
@@ -75,15 +84,20 @@ export default async function AdminRestaurantDetailPage({
       </header>
 
       <section className="space-y-4">
-        <KpiStrip kpis={kpis} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-serif text-xl tracking-tight">Analytics</h2>
+          <AnalyticsPeriodPicker />
+        </div>
+        <KpiStrip kpis={kpis} periodLabel={label} />
         <div className="grid gap-4 lg:grid-cols-2">
           <FunnelBars
-            scans={kpis.thirtyDayScans}
-            ratings={kpis.thirtyDayRatings}
-            googleClicks={kpis.thirtyDayGoogleClicks}
-            feedback={kpis.thirtyDayFeedback}
+            scans={kpis.windowScans}
+            ratings={kpis.windowRatings}
+            googleClicks={kpis.windowGoogleClicks}
+            feedback={kpis.windowFeedback}
+            periodLabel={label}
           />
-          <DailyScansChart data={daily} />
+          <DailyScansChart data={daily} periodLabel={label} />
         </div>
       </section>
 
@@ -97,8 +111,9 @@ export default async function AdminRestaurantDetailPage({
           </div>
           <Link
             href={`/admin/campaigns/new?businessId=${business.id}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
+            className={buttonVariants({ variant: "default" })}
           >
+            <Plus aria-hidden className="size-4" />
             New campaign
           </Link>
         </div>

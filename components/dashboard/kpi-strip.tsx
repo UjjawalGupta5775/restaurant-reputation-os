@@ -3,13 +3,12 @@ import { KpiCard } from "./kpi-card";
 
 type Props = {
   kpis: RestaurantKpis;
+  periodLabel: string;
 };
 
-export function KpiStrip({ kpis }: Props) {
+export function KpiStrip({ kpis, periodLabel }: Props) {
   const avg =
-    kpis.thirtyDayAvgRating === null
-      ? "—"
-      : kpis.thirtyDayAvgRating.toFixed(1);
+    kpis.windowAvgRating === null ? "—" : kpis.windowAvgRating.toFixed(1);
 
   return (
     <section
@@ -17,42 +16,42 @@ export function KpiStrip({ kpis }: Props) {
       className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5"
     >
       <KpiCard
-        label="Scans (30d)"
-        value={kpis.thirtyDayScans.toLocaleString()}
+        label={`Scans · ${periodLabel}`}
+        value={kpis.windowScans.toLocaleString()}
         sub={`${kpis.allTimeScans.toLocaleString()} all-time`}
       />
       <KpiCard
-        label="Ratings (30d)"
-        value={kpis.thirtyDayRatings.toLocaleString()}
+        label={`Ratings · ${periodLabel}`}
+        value={kpis.windowRatings.toLocaleString()}
         sub={`${kpis.allTimeRatings.toLocaleString()} all-time`}
       />
       <KpiCard
-        label="Avg ★ (30d)"
+        label={`Avg ★ · ${periodLabel}`}
         value={avg}
         sub={
-          kpis.thirtyDayRatings === 0
+          kpis.windowRatings === 0
             ? "no ratings yet"
-            : `over ${kpis.thirtyDayRatings.toLocaleString()} rating${
-                kpis.thirtyDayRatings === 1 ? "" : "s"
+            : `over ${kpis.windowRatings.toLocaleString()} rating${
+                kpis.windowRatings === 1 ? "" : "s"
               }`
         }
       />
       <KpiCard
-        label="Google clicks (30d)"
-        value={kpis.thirtyDayGoogleClicks.toLocaleString()}
+        label={`Google clicks · ${periodLabel}`}
+        value={kpis.windowGoogleClicks.toLocaleString()}
         sub={
-          kpis.thirtyDayRatings === 0
+          kpis.windowRatings === 0
             ? undefined
             : `${Math.round(
-                (kpis.thirtyDayGoogleClicks /
-                  Math.max(1, kpis.thirtyDayRatings)) *
+                (kpis.windowGoogleClicks /
+                  Math.max(1, kpis.windowRatings)) *
                   100,
               )}% of ratings`
         }
       />
       <KpiCard
-        label="Feedback (30d)"
-        value={kpis.thirtyDayFeedback.toLocaleString()}
+        label={`Feedback · ${periodLabel}`}
+        value={kpis.windowFeedback.toLocaleString()}
         sub={`${kpis.allTimeFeedback.toLocaleString()} all-time`}
       />
     </section>

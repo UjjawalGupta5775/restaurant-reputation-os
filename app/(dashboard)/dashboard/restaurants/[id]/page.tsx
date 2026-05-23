@@ -1,44 +1,56 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Plus } from "lucide-react";
 import { requireBusinessAccess } from "@/lib/dal";
-import { getBusinessByIdForOwner } from "@/lib/queries/businesses";
+import {
+  getBusinessByIdForOwner,
+  listBusinessesForOwner,
+} from "@/lib/queries/businesses";
 import { listCampaignsForBusiness } from "@/lib/queries/campaigns";
 import {
   getDailyScans,
   getRestaurantKpis,
 } from "@/lib/queries/analytics";
+import { parsePeriod, periodLabel } from "@/lib/queries/period";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { KpiStrip } from "@/components/dashboard/kpi-strip";
 import { FunnelBars } from "@/components/dashboard/funnel-bars";
 import { DailyScansChart } from "@/components/dashboard/daily-scans-chart";
+import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
+import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
 
 export default async function RestaurantDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ period?: string }>;
 }) {
   const { id } = await params;
+  const { period: periodParam } = await searchParams;
+  const period = parsePeriod(periodParam);
+  const label = periodLabel(period);
+
   await requireBusinessAccess(id);
 
   const business = await getBusinessByIdForOwner(id);
   if (!business) notFound();
 
-  const [campaigns, kpis, daily] = await Promise.all([
+  const [campaigns, kpis, daily, restaurants] = await Promise.all([
     listCampaignsForBusiness(id),
-    getRestaurantKpis(id),
-    getDailyScans(id),
+    getRestaurantKpis(id, period),
+    getDailyScans(id, period),
+    listBusinessesForOwner(),
   ]);
 
   return (
     <div className="space-y-10">
       <div>
-        <Link
-          href="/dashboard"
-          className="rounded-sm text-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
-        >
-          ← Back to dashboard
-        </Link>
+        <RestaurantSwitcher
+          restaurants={restaurants}
+          currentBusinessId={business.id}
+        />
       </div>
 
       <header className="space-y-2">
@@ -47,6 +59,12 @@ export default async function RestaurantDetailPage({
             {business.name}
           </h1>
           <div className="flex items-center gap-3 text-sm">
+            <Link
+              href={`/dashboard/restaurants/${business.id}/edit`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Edit details
+            </Link>
             <Link
               href={`/dashboard/restaurants/${business.id}/feedback`}
               className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -61,31 +79,47 @@ export default async function RestaurantDetailPage({
       </header>
 
       <section className="space-y-4">
-        <KpiStrip kpis={kpis} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-serif text-xl tracking-tight">Analytics</h2>
+          <AnalyticsPeriodPicker />
+        </div>
+        <KpiStrip kpis={kpis} periodLabel={label} />
         <div className="grid gap-4 lg:grid-cols-2">
           <FunnelBars
-            scans={kpis.thirtyDayScans}
-            ratings={kpis.thirtyDayRatings}
-            googleClicks={kpis.thirtyDayGoogleClicks}
-            feedback={kpis.thirtyDayFeedback}
+            scans={kpis.windowScans}
+            ratings={kpis.windowRatings}
+            googleClicks={kpis.windowGoogleClicks}
+            feedback={kpis.windowFeedback}
+            periodLabel={label}
           />
-          <DailyScansChart data={daily} />
+          <DailyScansChart data={daily} periodLabel={label} />
         </div>
       </section>
 
       <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="font-serif text-xl tracking-tight">Campaigns</h2>
-          <p className="text-sm text-muted-foreground">
-            Each campaign is a QR placement. Your admin manages campaigns.
-          </p>
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="font-serif text-xl tracking-tight">Campaigns</h2>
+            <p className="text-sm text-muted-foreground">
+              Each campaign is a QR placement for a specific spot in your
+              restaurant.
+            </p>
+          </div>
+          <Link
+            href={`/dashboard/restaurants/${business.id}/campaigns/new`}
+            className={buttonVariants({ variant: "default" })}
+          >
+            <Plus aria-hidden className="size-4" />
+            New campaign
+          </Link>
         </div>
 
         {campaigns.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center">
               <p className="font-serif italic text-base text-muted-foreground max-w-sm mx-auto">
-                No campaigns yet. Your admin will add QR placements here.
+                No campaigns yet. Add your first one to generate a QR for a
+                placement.
               </p>
             </CardContent>
           </Card>

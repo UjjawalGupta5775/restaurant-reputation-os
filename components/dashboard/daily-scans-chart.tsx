@@ -8,13 +8,14 @@ import {
 
 type Props = {
   data: DailyScan[];
+  periodLabel: string;
 };
 
 const W = 600;
 const H = 140;
 const PADDING = { top: 8, right: 8, bottom: 22, left: 28 };
 
-export function DailyScansChart({ data }: Props) {
+export function DailyScansChart({ data, periodLabel }: Props) {
   const max = Math.max(1, ...data.map((d) => d.scans));
   const total = data.reduce((s, d) => s + d.scans, 0);
 
@@ -23,13 +24,13 @@ export function DailyScansChart({ data }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="font-serif text-xl">
-            Daily scans (30d)
+            {`Daily scans · ${periodLabel}`}
           </CardTitle>
         </CardHeader>
         <CardContent className="py-6 text-center">
           <p className="font-serif italic text-base text-muted-foreground max-w-sm mx-auto">
-            Nothing scanned in the last 30 days. The chart fills in as scans
-            roll through.
+            Nothing scanned in this window. The chart fills in as scans roll
+            through.
           </p>
         </CardContent>
       </Card>
@@ -50,7 +51,7 @@ export function DailyScansChart({ data }: Props) {
     <Card>
       <CardHeader>
         <CardTitle className="font-serif text-xl">
-          Daily scans (30d)
+          {`Daily scans · ${periodLabel}`}
         </CardTitle>
         <p className="text-sm tabular-nums text-muted-foreground">
           {total.toLocaleString()} scan{total === 1 ? "" : "s"} · peak {max} on

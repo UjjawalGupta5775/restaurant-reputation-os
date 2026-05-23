@@ -1,21 +1,15 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { periodRange, type Period } from "./period";
 
-const DEFAULT_WINDOW_DAYS = 30;
 const AVG_RATING_SAMPLE_CAP = 5000;
 
-function daysAgoIso(days: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - days);
-  return d.toISOString();
-}
-
 export type RestaurantKpis = {
-  thirtyDayScans: number;
-  thirtyDayRatings: number;
-  thirtyDayAvgRating: number | null;
-  thirtyDayGoogleClicks: number;
-  thirtyDayFeedback: number;
+  windowScans: number;
+  windowRatings: number;
+  windowAvgRating: number | null;
+  windowGoogleClicks: number;
+  windowFeedback: number;
   allTimeScans: number;
   allTimeRatings: number;
   allTimeFeedback: number;
@@ -23,34 +17,35 @@ export type RestaurantKpis = {
 
 export async function getRestaurantKpis(
   businessId: string,
+  period: Period = "30d",
 ): Promise<RestaurantKpis> {
   const supabase = await createClient();
-  const since = daysAgoIso(DEFAULT_WINDOW_DAYS);
+  const { fromIso, toIso } = periodRange(period);
 
-  const eventCount = (eventType: string, sinceFilter: boolean) => {
+  const eventCount = (eventType: string, windowed: boolean) => {
     let q = supabase
       .from("analytics_events")
       .select("id", { count: "exact", head: true })
       .eq("business_id", businessId)
       .eq("event_type", eventType);
-    if (sinceFilter) q = q.gte("created_at", since);
+    if (windowed) q = q.gte("created_at", fromIso).lt("created_at", toIso);
     return q;
   };
 
-  const feedbackCount = (sinceFilter: boolean) => {
+  const feedbackCount = (windowed: boolean) => {
     let q = supabase
       .from("feedback_submissions")
       .select("id", { count: "exact", head: true })
       .eq("business_id", businessId);
-    if (sinceFilter) q = q.gte("created_at", since);
+    if (windowed) q = q.gte("created_at", fromIso).lt("created_at", toIso);
     return q;
   };
 
   const [
-    scans30,
-    ratings30,
-    googleClicks30,
-    feedback30,
+    scansWin,
+    ratingsWin,
+    googleClicksWin,
+    feedbackWin,
     scansAll,
     ratingsAll,
     feedbackAll,
@@ -68,7 +63,8 @@ export async function getRestaurantKpis(
       .select("metadata_json")
       .eq("business_id", businessId)
       .eq("event_type", "stars_selected")
-      .gte("created_at", since)
+      .gte("created_at", fromIso)
+      .lt("created_at", toIso)
       .limit(AVG_RATING_SAMPLE_CAP),
   ]);
 
@@ -87,11 +83,11 @@ export async function getRestaurantKpis(
   }
 
   return {
-    thirtyDayScans: scans30.count ?? 0,
-    thirtyDayRatings: ratings30.count ?? 0,
-    thirtyDayAvgRating: avgRating,
-    thirtyDayGoogleClicks: googleClicks30.count ?? 0,
-    thirtyDayFeedback: feedback30.count ?? 0,
+    windowScans: scansWin.count ?? 0,
+    windowRatings: ratingsWin.count ?? 0,
+    windowAvgRating: avgRating,
+    windowGoogleClicks: googleClicksWin.count ?? 0,
+    windowFeedback: feedbackWin.count ?? 0,
     allTimeScans: scansAll.count ?? 0,
     allTimeRatings: ratingsAll.count ?? 0,
     allTimeFeedback: feedbackAll.count ?? 0,
@@ -105,26 +101,29 @@ export type DailyScan = {
 
 export async function getDailyScans(
   businessId: string,
-  days = DEFAULT_WINDOW_DAYS,
+  period: Period = "30d",
 ): Promise<DailyScan[]> {
   const supabase = await createClient();
-  const since = daysAgoIso(days);
+  const { fromIso, toIso, bucketCount } = periodRange(period);
 
   const { data, error } = await supabase
     .from("analytics_events")
     .select("created_at")
     .eq("business_id", businessId)
     .eq("event_type", "scan_opened")
-    .gte("created_at", since)
+    .gte("created_at", fromIso)
+    .lt("created_at", toIso)
     .limit(10000);
 
   if (error) throw error;
 
+  // Anchor buckets on the UTC day of `fromIso` so single-day periods
+  // (today, yesterday) place their one bucket on the correct date.
   const buckets = new Map<string, number>();
-  const today = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setUTCDate(d.getUTCDate() - i);
+  const fromDate = new Date(fromIso);
+  for (let i = 0; i < bucketCount; i++) {
+    const d = new Date(fromDate);
+    d.setUTCDate(d.getUTCDate() + i);
     buckets.set(d.toISOString().slice(0, 10), 0);
   }
 
