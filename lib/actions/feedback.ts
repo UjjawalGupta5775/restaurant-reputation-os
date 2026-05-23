@@ -30,6 +30,19 @@ const feedbackSchema = z.object({
     .max(40)
     .optional()
     .transform((v) => (v && v !== "" ? v : undefined)),
+  // Client-measured ms from scan_opened to form submit. Optional so
+  // older clients / bots without the field still pass validation. Cap
+  // at 24h to drop bogus values; we store it for funnel-speed metrics.
+  // Empty-string and missing values both surface as `undefined` (not 0).
+  elapsedMs: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z
+      .number()
+      .int()
+      .min(0)
+      .max(24 * 60 * 60 * 1000)
+      .optional(),
+  ),
 });
 
 export type FeedbackFormState =
@@ -81,6 +94,7 @@ export async function submitFeedback(
     feedbackText: formData.get("feedbackText"),
     contactName: formData.get("contactName"),
     contactPhone: formData.get("contactPhone"),
+    elapsedMs: formData.get("elapsedMs") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -127,6 +141,7 @@ export async function submitFeedback(
         rating: data.rating,
         hasText: Boolean(data.feedbackText),
         hasContact: Boolean(data.contactName || data.contactPhone),
+        ...(data.elapsedMs !== undefined ? { elapsedMs: data.elapsedMs } : {}),
       },
     });
   } catch {

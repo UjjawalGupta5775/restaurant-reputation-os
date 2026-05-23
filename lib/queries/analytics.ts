@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { periodRange, type Period } from "./period";
 
 const AVG_RATING_SAMPLE_CAP = 5000;
+const TIMING_SAMPLE_CAP = 5000;
 
 export type RestaurantKpis = {
   windowScans: number;
@@ -138,4 +139,75 @@ export async function getDailyScans(
     date,
     scans,
   }));
+}
+
+export type FunnelTiming = {
+  // Median ms from scan_opened to stars_selected — the single most
+  // important number against the 20s funnel target.
+  medianTimeToRateMs: number | null;
+  // Median ms from scan_opened to a terminal step (google_redirect_clicked
+  // or feedback_submitted), whichever the customer actually reached.
+  medianTimeToCompleteMs: number | null;
+  rateSampleCount: number;
+  completeSampleCount: number;
+};
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  return sorted[mid];
+}
+
+function collectElapsedMs(
+  rows: { metadata_json: unknown }[] | null,
+): number[] {
+  if (!rows) return [];
+  const out: number[] = [];
+  for (const row of rows) {
+    const meta = row.metadata_json as { elapsedMs?: unknown } | null;
+    const v = meta?.elapsedMs;
+    if (typeof v === "number" && Number.isFinite(v) && v >= 0) out.push(v);
+  }
+  return out;
+}
+
+export async function getFunnelTiming(
+  businessId: string,
+  period: Period = "30d",
+): Promise<FunnelTiming> {
+  const supabase = await createClient();
+  const { fromIso, toIso } = periodRange(period);
+
+  const timingRows = (eventType: string) =>
+    supabase
+      .from("analytics_events")
+      .select("metadata_json")
+      .eq("business_id", businessId)
+      .eq("event_type", eventType)
+      .gte("created_at", fromIso)
+      .lt("created_at", toIso)
+      .limit(TIMING_SAMPLE_CAP);
+
+  const [rateRows, googleRows, feedbackRows] = await Promise.all([
+    timingRows("stars_selected"),
+    timingRows("google_redirect_clicked"),
+    timingRows("feedback_submitted"),
+  ]);
+
+  const rateMs = collectElapsedMs(rateRows.data ?? null);
+  const completeMs = [
+    ...collectElapsedMs(googleRows.data ?? null),
+    ...collectElapsedMs(feedbackRows.data ?? null),
+  ];
+
+  return {
+    medianTimeToRateMs: median(rateMs),
+    medianTimeToCompleteMs: median(completeMs),
+    rateSampleCount: rateMs.length,
+    completeSampleCount: completeMs.length,
+  };
 }

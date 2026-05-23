@@ -24,6 +24,7 @@ type Props = {
   campaignId: string | null;
   sessionId: string;
   rating: number;
+  getElapsedMs: () => number | null;
   onFirstInteraction: () => void;
   onSubmitted: () => void;
   className?: string;
@@ -34,6 +35,7 @@ export function PrivateFeedbackPanel({
   campaignId,
   sessionId,
   rating,
+  getElapsedMs,
   onFirstInteraction,
   onSubmitted,
   className,
@@ -44,11 +46,21 @@ export function PrivateFeedbackPanel({
   );
   const interacted = useRef(false);
   const submittedRef = useRef(false);
+  const elapsedInputRef = useRef<HTMLInputElement | null>(null);
 
   const flagInteraction = () => {
     if (!interacted.current) {
       interacted.current = true;
       onFirstInteraction();
+    }
+  };
+
+  // Stamp elapsedMs at submit time (not render time) so the value
+  // reflects the moment the customer actually sent the form.
+  const handleSubmit = () => {
+    const ms = getElapsedMs();
+    if (elapsedInputRef.current) {
+      elapsedInputRef.current.value = ms === null ? "" : String(ms);
     }
   };
 
@@ -87,11 +99,17 @@ export function PrivateFeedbackPanel({
         <CardTitle className="font-serif text-xl">{copy.title}</CardTitle>
         <CardDescription>{copy.description}</CardDescription>
       </CardHeader>
-      <form action={action}>
+      <form action={action} onSubmit={handleSubmit}>
         <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="campaignId" value={campaignId ?? ""} />
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="rating" value={rating} />
+        <input
+          ref={elapsedInputRef}
+          type="hidden"
+          name="elapsedMs"
+          defaultValue=""
+        />
         {/*
           Spam honeypot. Hidden from real users (off-screen, no tab stop,
           autoComplete off) but visible to naive form-fill bots. The server

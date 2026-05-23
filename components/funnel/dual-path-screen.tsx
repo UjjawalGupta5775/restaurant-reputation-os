@@ -12,6 +12,7 @@ type Props = {
   sessionId: string;
   rating: number;
   googleReviewUrl: string | null;
+  getElapsedMs: () => number | null;
   onPublicSelected: () => void;
   onPrivateSelected: () => void;
   onChipClicked: (chip: string) => void;
@@ -72,6 +73,7 @@ export function DualPathScreen({
   sessionId,
   rating,
   googleReviewUrl,
+  getElapsedMs,
   onPublicSelected,
   onPrivateSelected,
   onChipClicked,
@@ -99,6 +101,7 @@ export function DualPathScreen({
       campaignId={campaignId}
       sessionId={sessionId}
       rating={rating}
+      getElapsedMs={getElapsedMs}
       onFirstInteraction={onPrivateSelected}
       onSubmitted={onFeedbackSubmitted}
       className={privateFirst ? undefined : QUIET_CARD}

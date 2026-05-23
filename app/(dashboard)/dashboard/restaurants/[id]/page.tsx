@@ -9,6 +9,7 @@ import {
 import { listCampaignsForBusiness } from "@/lib/queries/campaigns";
 import {
   getDailyScans,
+  getFunnelTiming,
   getRestaurantKpis,
 } from "@/lib/queries/analytics";
 import { parsePeriod, periodLabel } from "@/lib/queries/period";
@@ -17,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KpiStrip } from "@/components/dashboard/kpi-strip";
 import { FunnelBars } from "@/components/dashboard/funnel-bars";
 import { DailyScansChart } from "@/components/dashboard/daily-scans-chart";
+import { FunnelSpeed } from "@/components/dashboard/funnel-speed";
 import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
 import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
 
@@ -37,10 +39,11 @@ export default async function RestaurantDetailPage({
   const business = await getBusinessByIdForOwner(id);
   if (!business) notFound();
 
-  const [campaigns, kpis, daily, restaurants] = await Promise.all([
+  const [campaigns, kpis, daily, timing, restaurants] = await Promise.all([
     listCampaignsForBusiness(id),
     getRestaurantKpis(id, period),
     getDailyScans(id, period),
+    getFunnelTiming(id, period),
     listBusinessesForOwner(),
   ]);
 
@@ -104,6 +107,7 @@ export default async function RestaurantDetailPage({
           />
           <DailyScansChart data={daily} periodLabel={label} />
         </div>
+        <FunnelSpeed timing={timing} periodLabel={label} />
       </section>
 
       <section className="space-y-4">

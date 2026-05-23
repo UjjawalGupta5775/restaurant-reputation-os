@@ -35,6 +35,10 @@ export function CustomerFunnel({ business, campaign }: Props) {
   );
   const [sessionId, setSessionId] = useState<string | null>(null);
   const scanFired = useRef(false);
+  // Stamped the moment the funnel mounts (close to scan_opened). All
+  // subsequent events carry an elapsedMs relative to this anchor so
+  // the dashboard can measure how long each step takes.
+  const scanOpenedAtRef = useRef<number | null>(null);
 
   // sessionStorage isn't available during SSR; initialize on mount. The
   // cascading-render lint is intentional here — we need the post-hydration
@@ -45,23 +49,33 @@ export function CustomerFunnel({ business, campaign }: Props) {
     setSessionId(getSessionId());
   }, []);
 
+  const elapsedMs = useCallback(() => {
+    const start = scanOpenedAtRef.current;
+    if (start === null) return null;
+    return Math.max(0, Date.now() - start);
+  }, []);
+
   const emit = useCallback(
     (event: FunnelEvent, metadata?: Record<string, unknown>) => {
       if (!sessionId) return;
+      const ms = elapsedMs();
+      const enriched =
+        ms !== null ? { ...(metadata ?? {}), elapsedMs: ms } : metadata;
       void trackEvent({
         businessId: business.id,
         campaignId: campaign?.id ?? null,
         sessionId,
         event,
-        metadata,
+        metadata: enriched,
       });
     },
-    [business.id, campaign?.id, sessionId],
+    [business.id, campaign?.id, sessionId, elapsedMs],
   );
 
   useEffect(() => {
     if (!sessionId || scanFired.current) return;
     scanFired.current = true;
+    scanOpenedAtRef.current = Date.now();
     emit("scan_opened", { campaignSlug: campaign?.slug ?? null });
   }, [sessionId, emit, campaign?.slug]);
 
@@ -88,6 +102,7 @@ export function CustomerFunnel({ business, campaign }: Props) {
         sessionId={sessionId ?? ""}
         rating={rating}
         googleReviewUrl={business.google_review_url}
+        getElapsedMs={elapsedMs}
         onPublicSelected={() => emit("public_review_selected")}
         onPrivateSelected={() => emit("private_feedback_selected")}
         onChipClicked={(chip) => emit("prompt_chip_clicked", { chip })}
