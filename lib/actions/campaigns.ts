@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { verifySession, requireSuperAdmin } from "@/lib/dal";
 import { slugify } from "@/lib/slug";
+import { recordAudit } from "@/lib/audit";
 
 const scopeSchema = z.enum(["admin", "owner"]).default("owner");
 
@@ -64,10 +65,13 @@ export async function createCampaign(
   formData: FormData,
 ): Promise<CampaignFormState> {
   const scope = scopeSchema.parse(formData.get("scope") ?? undefined);
+  let actorUserId: string;
   if (scope === "admin") {
-    await requireSuperAdmin();
+    const session = await requireSuperAdmin();
+    actorUserId = session.userId;
   } else {
-    await verifySession();
+    const session = await verifySession();
+    actorUserId = session.userId;
   }
   const base = "/" + (scope === "admin" ? "admin" : "dashboard");
 
@@ -102,6 +106,14 @@ export async function createCampaign(
       .single();
 
     if (!error && data) {
+      await recordAudit({
+        actorUserId,
+        businessId,
+        action: "campaign_created",
+        targetType: "campaign",
+        targetId: data.id as string,
+        metadata: { name, slug: candidate, scope, source_type: sourceType },
+      });
       revalidatePath(`${base}/restaurants/${businessId}`);
       redirect(`${base}/campaigns/${data.id}`);
     }

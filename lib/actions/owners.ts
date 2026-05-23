@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireSuperAdmin } from "@/lib/dal";
+import { recordAudit } from "@/lib/audit";
 
 export type OwnerActionState =
   | {
@@ -219,6 +220,15 @@ export async function inviteOwner(
     sent_email: invitedFresh,
   });
 
+  await recordAudit({
+    actorUserId: session.userId,
+    businessId,
+    action: "owner_invited",
+    targetType: "user",
+    targetId: userId,
+    metadata: { invited_email: email, sent_email: invitedFresh },
+  });
+
   revalidatePath(`/admin/restaurants/${businessId}/owners`);
 
   return {
@@ -257,6 +267,14 @@ export async function removeOwner(
   await emitPlatformEvent(businessId, "owner_removed", {
     removed_user_id: userId,
     actor_user_id: session.userId,
+  });
+
+  await recordAudit({
+    actorUserId: session.userId,
+    businessId,
+    action: "owner_removed",
+    targetType: "user",
+    targetId: userId,
   });
 
   revalidatePath(`/admin/restaurants/${businessId}/owners`);

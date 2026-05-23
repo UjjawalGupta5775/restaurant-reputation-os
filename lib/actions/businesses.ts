@@ -10,6 +10,7 @@ import {
   verifySession,
 } from "@/lib/dal";
 import { baseSlugFor } from "@/lib/slug";
+import { recordAudit } from "@/lib/audit";
 
 const scopeSchema = z.enum(["admin", "owner"]).default("owner");
 
@@ -68,10 +69,13 @@ export async function createBusiness(
   // createBusiness remains super-admin only — owners use createOwnBusiness
   // (below), which routes through the create_owner_business RPC so the
   // membership row is inserted atomically with the business.
+  let actorUserId: string;
   if (scope === "admin") {
-    await requireSuperAdmin();
+    const session = await requireSuperAdmin();
+    actorUserId = session.userId;
   } else {
-    await verifySession();
+    const session = await verifySession();
+    actorUserId = session.userId;
   }
   const base = "/" + (scope === "admin" ? "admin" : "dashboard");
 
@@ -102,6 +106,14 @@ export async function createBusiness(
       .single();
 
     if (!error && data) {
+      await recordAudit({
+        actorUserId,
+        businessId: data.id as string,
+        action: "business_created",
+        targetType: "business",
+        targetId: data.id as string,
+        metadata: { name, slug: candidate, scope },
+      });
       revalidatePath(base);
       redirect(`${base}/restaurants/${data.id}`);
     }
@@ -134,7 +146,7 @@ export async function createOwnBusiness(
   _prev: BusinessFormState,
   formData: FormData,
 ): Promise<BusinessFormState> {
-  await verifySession();
+  const session = await verifySession();
 
   const parsed = ownCreateSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
@@ -156,6 +168,15 @@ export async function createOwnBusiness(
     }
     return { error: "Could not create your restaurant. Please try again." };
   }
+
+  await recordAudit({
+    actorUserId: session.userId,
+    businessId: businessId as string,
+    action: "business_created",
+    targetType: "business",
+    targetId: businessId as string,
+    metadata: { name: parsed.data.name, scope: "owner_self_serve" },
+  });
 
   revalidatePath("/dashboard");
   redirect(`/dashboard/restaurants/${businessId}`);
@@ -206,7 +227,7 @@ export async function updateBusiness(
   const base = "/" + (scope === "admin" ? "admin" : "dashboard");
 
   if (scope === "admin") {
-    await requireSuperAdmin();
+    const session = await requireSuperAdmin();
 
     const parsed = updateSchema.safeParse({
       id: formData.get("id"),
@@ -236,6 +257,18 @@ export async function updateBusiness(
       return { error: "You don't have access to that restaurant." };
     }
 
+    await recordAudit({
+      actorUserId: session.userId,
+      businessId: id,
+      action: "business_updated",
+      targetType: "business",
+      targetId: id,
+      metadata: {
+        scope: "admin",
+        fields: ["name", "google_review_url", "google_place_id"],
+      },
+    });
+
     revalidatePath(base);
     revalidatePath(`${base}/restaurants/${id}`);
     redirect(`${base}/restaurants/${id}`);
@@ -243,10 +276,13 @@ export async function updateBusiness(
 
   // Owner branch — narrow schema, narrow column whitelist.
   const businessIdCandidate = formData.get("id");
+  let actorUserId: string;
   if (typeof businessIdCandidate === "string") {
-    await requireBusinessAccess(businessIdCandidate);
+    const session = await requireBusinessAccess(businessIdCandidate);
+    actorUserId = session.userId;
   } else {
-    await verifySession();
+    const session = await verifySession();
+    actorUserId = session.userId;
   }
 
   const parsed = ownerUpdateSchema.safeParse({
@@ -273,6 +309,15 @@ export async function updateBusiness(
   if (!data || data.length === 0) {
     return { error: "You don't have access to that restaurant." };
   }
+
+  await recordAudit({
+    actorUserId,
+    businessId: id,
+    action: "business_updated",
+    targetType: "business",
+    targetId: id,
+    metadata: { scope: "owner", fields: ["name", "phone", "address", "hours"] },
+  });
 
   revalidatePath(base);
   revalidatePath(`${base}/restaurants/${id}`);
@@ -307,7 +352,7 @@ export async function updateBusinessLogo(
   if (typeof idRaw !== "string" || !z.uuid().safeParse(idRaw).success) {
     return { error: "Invalid restaurant id." };
   }
-  await requireBusinessAccess(idRaw);
+  const session = await requireBusinessAccess(idRaw);
 
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) {
@@ -347,6 +392,18 @@ export async function updateBusinessLogo(
     return { error: "You don't have access to that restaurant." };
   }
 
+  await recordAudit({
+    actorUserId: session.userId,
+    businessId: idRaw,
+    action: "business_logo_updated",
+    targetType: "business",
+    targetId: idRaw,
+    metadata: {
+      content_type: file.type,
+      size_bytes: file.size,
+    },
+  });
+
   revalidatePath(`/dashboard/restaurants/${idRaw}`);
   revalidatePath(`/dashboard/restaurants/${idRaw}/edit`);
   return { ok: true };
@@ -360,7 +417,7 @@ export async function clearBusinessLogo(
   if (typeof idRaw !== "string" || !z.uuid().safeParse(idRaw).success) {
     return { error: "Invalid restaurant id." };
   }
-  await requireBusinessAccess(idRaw);
+  const session = await requireBusinessAccess(idRaw);
 
   const supabase = await createClient();
   const path = `${idRaw}/logo`;
@@ -377,6 +434,14 @@ export async function clearBusinessLogo(
   if (!data || data.length === 0) {
     return { error: "You don't have access to that restaurant." };
   }
+
+  await recordAudit({
+    actorUserId: session.userId,
+    businessId: idRaw,
+    action: "business_logo_cleared",
+    targetType: "business",
+    targetId: idRaw,
+  });
 
   revalidatePath(`/dashboard/restaurants/${idRaw}`);
   revalidatePath(`/dashboard/restaurants/${idRaw}/edit`);
