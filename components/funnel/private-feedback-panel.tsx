@@ -56,15 +56,33 @@ export function PrivateFeedbackPanel({
     }
   }, [state, onSubmitted]);
 
+  // Tone-match the title/description to the rating. Operationally identical
+  // — the form does the same thing for every rating. Only the framing softens
+  // for lower ratings so the panel reads as "we want to help" rather than
+  // "file a complaint." The "Not posted publicly" clarification is preserved
+  // at every rating to keep customers oriented about what they're sending.
+  const copy =
+    rating <= 2
+      ? {
+          title: "What could we have done better?",
+          description:
+            "Tell the owner directly. They see this; the public doesn't.",
+        }
+      : rating === 3
+        ? {
+            title: "Anything we should know?",
+            description: "Goes straight to the owner. Not posted publicly.",
+          }
+        : {
+            title: "Send private feedback",
+            description: "Goes straight to the owner. Not posted publicly.",
+          };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-xl">
-          Send private feedback
-        </CardTitle>
-        <CardDescription>
-          Goes straight to the owner. Not posted publicly.
-        </CardDescription>
+        <CardTitle className="font-serif text-xl">{copy.title}</CardTitle>
+        <CardDescription>{copy.description}</CardDescription>
       </CardHeader>
       <form action={action}>
         <input type="hidden" name="businessId" value={businessId} />
