@@ -3,9 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { requireBusinessAccess } from "@/lib/dal";
 import { getCampaignWithBusinessForOwner } from "@/lib/queries/campaigns";
-import { listBusinessesForOwner } from "@/lib/queries/businesses";
 import { QRDownload } from "@/components/dashboard/qr-download";
-import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
 import {
   Card,
   CardContent,
@@ -27,27 +25,20 @@ export default async function CampaignDetailPage({
   // query, but this provides a clear 403-style redirect for non-members.
   await requireBusinessAccess(campaign.business.id);
 
-  const [h, restaurants] = await Promise.all([
-    headers(),
-    listBusinessesForOwner(),
-  ]);
+  const h = await headers();
   const proto = h.get("x-forwarded-proto") ?? "http";
   const host = h.get("host") ?? "localhost:3000";
   const publicUrl = `${proto}://${host}/r/${campaign.business.slug}?c=${campaign.slug}`;
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div>
         <Link
           href={`/dashboard/restaurants/${campaign.business.id}`}
           className="rounded-sm text-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
         >
           ← Back to {campaign.business.name}
         </Link>
-        <RestaurantSwitcher
-          restaurants={restaurants}
-          currentBusinessId={campaign.business.id}
-        />
       </div>
 
       <header className="space-y-2">
