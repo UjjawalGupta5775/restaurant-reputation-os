@@ -129,3 +129,17 @@
     @apply font-sans;
   }
 }
+
+/* Funnel accordion: a <details> element used to collapse the secondary
+   panel on mobile in the 4-5★ flow. At md+ we want the two-column layout
+   to stay intact regardless of the open state, so we remove the <details>
+   wrapper from layout (display: contents) and hide the summary. The
+   panel inside becomes the direct grid cell. */
+@media (min-width: 768px) {
+  details[data-funnel-accordion] {
+    display: contents;
+  }
+  details[data-funnel-accordion] > summary {
+    display: none;
+  }
+}

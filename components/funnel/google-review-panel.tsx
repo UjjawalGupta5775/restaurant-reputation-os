@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { REVIEW_CHIPS } from "@/lib/funnel/chips";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -20,6 +21,7 @@ type Props = {
   onChipClicked: (chip: string) => void;
   onCopyClicked: (chars: number) => void;
   onRedirectClicked: () => void;
+  className?: string;
 };
 
 export function GoogleReviewPanel({
@@ -29,6 +31,7 @@ export function GoogleReviewPanel({
   onChipClicked,
   onCopyClicked,
   onRedirectClicked,
+  className,
 }: Props) {
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
@@ -101,7 +104,7 @@ export function GoogleReviewPanel({
   const noUrl = !googleReviewUrl;
 
   return (
-    <Card>
+    <Card className={cn(className)}>
       <CardHeader>
         <CardTitle className="font-serif text-xl">
           Leave a Google review

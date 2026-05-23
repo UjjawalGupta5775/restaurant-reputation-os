@@ -5,6 +5,7 @@ import {
   submitFeedback,
   type FeedbackFormState,
 } from "@/lib/actions/feedback";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ type Props = {
   rating: number;
   onFirstInteraction: () => void;
   onSubmitted: () => void;
+  className?: string;
 };
 
 export function PrivateFeedbackPanel({
@@ -34,6 +36,7 @@ export function PrivateFeedbackPanel({
   rating,
   onFirstInteraction,
   onSubmitted,
+  className,
 }: Props) {
   const [state, action, pending] = useActionState<FeedbackFormState, FormData>(
     submitFeedback,
@@ -79,7 +82,7 @@ export function PrivateFeedbackPanel({
           };
 
   return (
-    <Card>
+    <Card className={cn(className)}>
       <CardHeader>
         <CardTitle className="font-serif text-xl">{copy.title}</CardTitle>
         <CardDescription>{copy.description}</CardDescription>
