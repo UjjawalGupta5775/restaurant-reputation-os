@@ -5,10 +5,11 @@ import { StarRating } from "./star-rating";
 
 type Props = {
   businessName: string;
+  logoUrl?: string | null;
   onRate: (rating: number) => void;
 };
 
-export function RatingScreen({ businessName, onRate }: Props) {
+export function RatingScreen({ businessName, logoUrl, onRate }: Props) {
   const [value, setValue] = useState(0);
 
   const handleChange = (n: number) => {
@@ -19,6 +20,14 @@ export function RatingScreen({ businessName, onRate }: Props) {
   return (
     <section className="flex flex-col items-center gap-6 text-center">
       <div className="space-y-3">
+        {logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            alt=""
+            className="mx-auto size-20 rounded-md border object-cover"
+          />
+        )}
         <h1 className="font-serif text-4xl tracking-tight">
           {businessName}
         </h1>

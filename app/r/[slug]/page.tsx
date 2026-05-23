@@ -29,6 +29,7 @@ export default async function PublicRestaurantPage({
           id: business.id,
           name: business.name,
           google_review_url: business.google_review_url,
+          logo_url: business.logo_url,
         }}
         campaign={campaign ? { id: campaign.id, slug: campaign.slug } : null}
       />

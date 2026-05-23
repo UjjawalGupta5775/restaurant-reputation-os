@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireBusinessAccess } from "@/lib/dal";
 import { getBusinessByIdForOwner } from "@/lib/queries/businesses";
 import { RestaurantEditOwnerForm } from "@/components/dashboard/restaurant-edit-owner-form";
+import { RestaurantLogoUploader } from "@/components/dashboard/restaurant-logo-uploader";
 
 export default async function OwnerRestaurantEditPage({
   params,
@@ -32,6 +33,11 @@ export default async function OwnerRestaurantEditPage({
           Update name and operational details for this restaurant.
         </p>
       </header>
+
+      <RestaurantLogoUploader
+        businessId={business.id}
+        currentLogoUrl={business.logo_url}
+      />
 
       <RestaurantEditOwnerForm
         defaults={{

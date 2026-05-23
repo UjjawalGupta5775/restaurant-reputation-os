@@ -12,6 +12,7 @@ type Business = {
   id: string;
   name: string;
   google_review_url: string | null;
+  logo_url: string | null;
 };
 
 type Campaign = {
@@ -100,5 +101,11 @@ export function CustomerFunnel({ business, campaign }: Props) {
     );
   }
 
-  return <RatingScreen businessName={business.name} onRate={handleRate} />;
+  return (
+    <RatingScreen
+      businessName={business.name}
+      logoUrl={business.logo_url}
+      onRate={handleRate}
+    />
+  );
 }

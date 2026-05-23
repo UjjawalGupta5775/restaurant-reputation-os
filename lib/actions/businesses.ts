@@ -233,3 +233,107 @@ export async function updateBusiness(
   revalidatePath(`${base}/restaurants/${id}`);
   redirect(`${base}/restaurants/${id}`);
 }
+
+// --- Logo upload -----------------------------------------------------------
+//
+// Logos live in the public Supabase Storage bucket "restaurant-logos" at
+// path `{business_id}/logo` (no extension — Content-Type is set from
+// File.type at upload). Owner-scoped RLS on storage.objects gates writes
+// (migration 0006). businesses.logo_url stores the public URL with a
+// cache-busting ?v=<ts> query so updates don't get pinned to the previous
+// image.
+
+const LOGO_BUCKET = "restaurant-logos";
+const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+const LOGO_ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+export type LogoFormState =
+  | {
+      error?: string;
+      ok?: boolean;
+    }
+  | undefined;
+
+export async function updateBusinessLogo(
+  _prev: LogoFormState,
+  formData: FormData,
+): Promise<LogoFormState> {
+  const idRaw = formData.get("id");
+  if (typeof idRaw !== "string" || !z.uuid().safeParse(idRaw).success) {
+    return { error: "Invalid restaurant id." };
+  }
+  await requireBusinessAccess(idRaw);
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+  if (!LOGO_ALLOWED_TYPES.has(file.type)) {
+    return { error: "Logo must be a PNG, JPEG, or WebP image." };
+  }
+  if (file.size > LOGO_MAX_BYTES) {
+    return { error: "Logo must be 2 MB or smaller." };
+  }
+
+  const supabase = await createClient();
+  const path = `${idRaw}/logo`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(LOGO_BUCKET)
+    .upload(path, file, {
+      contentType: file.type,
+      upsert: true,
+      cacheControl: "3600",
+    });
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const { data: pub } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
+  const cacheBustedUrl = `${pub.publicUrl}?v=${Date.now()}`;
+
+  const { data, error: updateError } = await supabase
+    .from("businesses")
+    .update({ logo_url: cacheBustedUrl })
+    .eq("id", idRaw)
+    .select("id");
+  if (updateError) return { error: updateError.message };
+  if (!data || data.length === 0) {
+    return { error: "You don't have access to that restaurant." };
+  }
+
+  revalidatePath(`/dashboard/restaurants/${idRaw}`);
+  revalidatePath(`/dashboard/restaurants/${idRaw}/edit`);
+  return { ok: true };
+}
+
+export async function clearBusinessLogo(
+  _prev: LogoFormState,
+  formData: FormData,
+): Promise<LogoFormState> {
+  const idRaw = formData.get("id");
+  if (typeof idRaw !== "string" || !z.uuid().safeParse(idRaw).success) {
+    return { error: "Invalid restaurant id." };
+  }
+  await requireBusinessAccess(idRaw);
+
+  const supabase = await createClient();
+  const path = `${idRaw}/logo`;
+
+  // Best-effort removal of the object — if it's already gone, ignore.
+  await supabase.storage.from(LOGO_BUCKET).remove([path]);
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .update({ logo_url: null })
+    .eq("id", idRaw)
+    .select("id");
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "You don't have access to that restaurant." };
+  }
+
+  revalidatePath(`/dashboard/restaurants/${idRaw}`);
+  revalidatePath(`/dashboard/restaurants/${idRaw}/edit`);
+  return { ok: true };
+}
