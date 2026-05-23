@@ -244,7 +244,7 @@ try {
       : fail(`expected 401/403, got ${r.status}: ${await r.text()}`);
   }
 
-  console.log("\n[verify] owner CANNOT update OWN business (read-only)");
+  console.log("\n[verify] owner CAN update OWN business (migration 0005)");
   {
     const r = await asUser(
       ownerToken,
@@ -252,35 +252,74 @@ try {
       {
         method: "PATCH",
         headers: { Prefer: "return=representation" },
-        body: JSON.stringify({ name: "owner-tries-to-rename" }),
+        body: JSON.stringify({ name: "Step 9 Verification Diner (renamed)" }),
+      },
+    );
+    if (r.status === 200) {
+      const body = await r.json();
+      body.length === 1 && body[0].name === "Step 9 Verification Diner (renamed)"
+        ? pass("owner updated OWN business (1 row)")
+        : fail(`expected 1 updated row, got ${JSON.stringify(body)}`);
+    } else {
+      fail(`expected 200, got ${r.status}: ${await r.text()}`);
+    }
+  }
+
+  console.log("\n[verify] owner CANNOT update OTHER business (cross-tenant)");
+  {
+    const r = await asUser(
+      ownerToken,
+      `/rest/v1/businesses?id=eq.${EXISTING_BIZ_ID}`,
+      {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({ name: "owner-tries-cross-tenant-rename" }),
       },
     );
     // RLS silently filters update to 0 rows, returning [] with 200.
     if (r.status === 200) {
       const body = await r.json();
       body.length === 0
-        ? pass("owner update affected 0 rows (RLS filtered)")
-        : fail(`expected 0 rows updated, got ${JSON.stringify(body)}`);
+        ? pass("owner update on other business affected 0 rows (RLS filtered)")
+        : fail(`expected 0 rows, got ${JSON.stringify(body)}`);
     } else if (r.status === 401 || r.status === 403) {
-      pass(`owner blocked from update (status ${r.status})`);
+      pass(`owner blocked from cross-tenant update (status ${r.status})`);
     } else {
       fail(`unexpected status ${r.status}: ${await r.text()}`);
     }
   }
 
-  console.log("\n[verify] owner CANNOT insert a campaign (super-admin only)");
+  console.log("\n[verify] owner CAN insert a campaign for OWN business (migration 0005)");
+  {
+    const ownCampaignSlug = "owner-own-campaign-" + Date.now();
+    const r = await asUser(ownerToken, "/rest/v1/campaigns", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        business_id: testBizId,
+        name: "Owner-created campaign",
+        slug: ownCampaignSlug,
+        source_type: "table",
+      }),
+    });
+    r.status === 201
+      ? pass(`owner created campaign for OWN business (201)`)
+      : fail(`expected 201, got ${r.status}: ${await r.text()}`);
+  }
+
+  console.log("\n[verify] owner CANNOT insert a campaign for OTHER business");
   {
     const r = await asUser(ownerToken, "/rest/v1/campaigns", {
       method: "POST",
       body: JSON.stringify({
-        business_id: testBizId,
-        name: "owner-tries-campaign",
-        slug: "owner-tries-" + Date.now(),
+        business_id: EXISTING_BIZ_ID,
+        name: "owner-tries-cross-tenant-campaign",
+        slug: "owner-cross-" + Date.now(),
         source_type: "table",
       }),
     });
     r.status === 401 || r.status === 403
-      ? pass(`owner blocked from campaign insert (status ${r.status})`)
+      ? pass(`owner blocked from cross-tenant campaign insert (status ${r.status})`)
       : fail(`expected 401/403, got ${r.status}: ${await r.text()}`);
   }
 
@@ -362,6 +401,10 @@ try {
     );
     await pg_client.query(
       `delete from public.analytics_events where business_id = $1`,
+      [testBizId],
+    );
+    await pg_client.query(
+      `delete from public.campaigns where business_id = $1`,
       [testBizId],
     );
     await pg_client.query(

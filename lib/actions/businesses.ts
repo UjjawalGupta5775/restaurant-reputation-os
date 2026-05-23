@@ -65,8 +65,8 @@ export async function createBusiness(
 ): Promise<BusinessFormState> {
   const scope = parseScope(formData);
   // Defense in depth: server actions bypass route-level layout gating.
-  // Both scopes still require super-admin since owners are read-only on
-  // businesses post-RBAC swap (migration 0003).
+  // createBusiness remains super-admin only — owners can UPDATE their own
+  // business (migration 0005) but cannot INSERT a new one.
   if (scope === "admin") {
     await requireSuperAdmin();
   } else {
