@@ -177,9 +177,6 @@ export function PrivateFeedbackPanel({
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Only the message is required.
-          </p>
           {state?.error && (
             <p role="alert" className="text-sm text-destructive">
               {state.error}

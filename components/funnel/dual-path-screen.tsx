@@ -79,14 +79,14 @@ export function DualPathScreen({
       data-funnel-accordion=""
       className="group/funnel-details rounded-xl"
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl bg-muted/30 px-4 py-4 text-sm font-medium ring-1 ring-foreground/10 select-none">
+      <summary className="mb-2 flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl bg-muted/30 px-4 py-4 text-sm font-medium ring-1 ring-foreground/10 select-none">
         <span>Prefer to tell the owner privately?</span>
         <ChevronDown
           aria-hidden="true"
           className="size-4 shrink-0 text-muted-foreground transition-transform group-open/funnel-details:rotate-180"
         />
       </summary>
-      <div className="pt-2">{privatePanel}</div>
+      {privatePanel}
     </details>
   ) : (
     privatePanel
