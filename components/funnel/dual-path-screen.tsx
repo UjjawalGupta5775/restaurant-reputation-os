@@ -1,6 +1,8 @@
 "use client";
 
+import { useId, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { GoogleReviewPanel } from "./google-review-panel";
 import { PrivateFeedbackPanel } from "./private-feedback-panel";
 
@@ -22,14 +24,47 @@ type Props = {
 // the default card surface and is rendered first. The other path stays fully
 // visible and one-tap accessible — we only soften its surface (bg-muted/30,
 // thinner ring) so the layout feels less crowded. At 4-5★ the secondary
-// (private feedback) panel is additionally wrapped in a native <details>
-// accordion on mobile; a globals.css rule swaps the <details> to
-// `display: contents` at md+, keeping the desktop two-column layout intact.
+// (private feedback) panel is additionally collapsed behind a tap-to-open
+// trigger on mobile via <MobileCollapsible>; the trigger is hidden at md+
+// (md:hidden) and the panel is always shown at md+ (md:block) so desktop
+// keeps the two-column layout untouched.
 //
 // This is intentionally NOT review gating: both paths render in the DOM at
 // every rating, neither is removed or hidden by JS, and the Google review
-// panel is never collapsed behind an accordion at any rating.
+// panel is never collapsed at any rating.
 const QUIET_CARD = "bg-muted/30 ring-foreground/5";
+
+// Mobile-only collapsible. Trigger button is removed from layout at md+
+// (md:hidden), and the panel is forced visible at md+ (md:block) regardless
+// of the `open` state. Visibility is driven entirely by Tailwind's responsive
+// variants, so there's no JS media query and no hydration flicker.
+function MobileCollapsible({ children }: { children: ReactNode }) {
+  const panelId = useId();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl bg-muted/30 px-4 py-4 text-sm font-medium ring-1 ring-foreground/10 select-none md:hidden"
+      >
+        <span>Prefer to tell the owner privately?</span>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+      <div id={panelId} className={open ? "block" : "hidden md:block"}>
+        {children}
+      </div>
+    </>
+  );
+}
 
 export function DualPathScreen({
   businessId,
@@ -70,24 +105,8 @@ export function DualPathScreen({
     />
   );
 
-  // At 4-5★, wrap the private panel in a <details> so mobile users see a
-  // single-line tile they can tap to expand. On desktop (md+) globals.css
-  // sets the <details> to display:contents and hides the summary, so the
-  // card sits directly in the grid cell — same as today.
   const privateSlot = !privateFirst ? (
-    <details
-      data-funnel-accordion=""
-      className="group/funnel-details rounded-xl"
-    >
-      <summary className="mb-2 flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl bg-muted/30 px-4 py-4 text-sm font-medium ring-1 ring-foreground/10 select-none">
-        <span>Prefer to tell the owner privately?</span>
-        <ChevronDown
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-open/funnel-details:rotate-180"
-        />
-      </summary>
-      {privatePanel}
-    </details>
+    <MobileCollapsible>{privatePanel}</MobileCollapsible>
   ) : (
     privatePanel
   );
