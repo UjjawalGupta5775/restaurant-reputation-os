@@ -10,7 +10,8 @@ export function QRDownload({
   publicUrl: string;
 }) {
   const qrUrl = `/api/qr/${campaignId}`;
-  const downloadUrl = `${qrUrl}?download=1`;
+  const downloadPng = `${qrUrl}?download=1`;
+  const downloadSvg = `${qrUrl}?format=svg&download=1`;
 
   return (
     <div className="space-y-4">
@@ -25,8 +26,13 @@ export function QRDownload({
         />
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <a href={downloadUrl} download>
+        <a href={downloadPng} download>
           <Button type="button">Download PNG</Button>
+        </a>
+        <a href={downloadSvg} download>
+          <Button type="button" variant="outline">
+            Download SVG
+          </Button>
         </a>
         <Button
           type="button"
@@ -38,6 +44,10 @@ export function QRDownload({
           Copy public link
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        SVG is vector — scale it to any size for table tents, posters, or
+        window decals without pixelation.
+      </p>
       <p className="text-sm text-muted-foreground break-all">{publicUrl}</p>
     </div>
   );

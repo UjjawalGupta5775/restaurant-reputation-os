@@ -36,13 +36,33 @@ export async function GET(
   const host = h.get("host") ?? "localhost:3000";
   const target = `${proto}://${host}/r/${business.slug}?c=${data.slug as string}`;
 
+  const format = request.nextUrl.searchParams.get("format") === "svg" ? "svg" : "png";
+  const wantDownload = request.nextUrl.searchParams.get("download") === "1";
+
+  if (format === "svg") {
+    // Vector output for owners who want to print at any size without
+    // pixelation (table tents, posters, window decals). qrcode's string
+    // SVG renderer doesn't accept `width` directly — emit a clean square
+    // SVG and let downstream tools scale it.
+    const svg = await QRCode.toString(target, { type: "svg", margin: 2 });
+    const responseHeaders: Record<string, string> = {
+      "Content-Type": "image/svg+xml; charset=utf-8",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    };
+    if (wantDownload) {
+      responseHeaders["Content-Disposition"] =
+        `attachment; filename="qr-${campaignId}.svg"`;
+    }
+    return new Response(svg, { headers: responseHeaders });
+  }
+
   const png = await QRCode.toBuffer(target, { width: 1024, margin: 2 });
 
   const responseHeaders: Record<string, string> = {
     "Content-Type": "image/png",
     "Cache-Control": "public, max-age=31536000, immutable",
   };
-  if (request.nextUrl.searchParams.get("download") === "1") {
+  if (wantDownload) {
     responseHeaders["Content-Disposition"] =
       `attachment; filename="qr-${campaignId}.png"`;
   }
