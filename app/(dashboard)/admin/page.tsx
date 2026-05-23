@@ -22,9 +22,17 @@ export default async function AdminHomePage() {
             and manage owners from here.
           </p>
         </div>
-        <Link href="/admin/restaurants/new" className={buttonVariants()}>
-          New restaurant
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/audit"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Audit log
+          </Link>
+          <Link href="/admin/restaurants/new" className={buttonVariants()}>
+            New restaurant
+          </Link>
+        </div>
       </div>
 
       {businesses.length === 0 ? (
