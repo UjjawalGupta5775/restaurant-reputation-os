@@ -71,6 +71,31 @@ export function PrivateFeedbackPanel({
         <input type="hidden" name="campaignId" value={campaignId ?? ""} />
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="rating" value={rating} />
+        {/*
+          Spam honeypot. Hidden from real users (off-screen, no tab stop,
+          autoComplete off) but visible to naive form-fill bots. The server
+          action drops any submission where "website" is non-empty.
+        */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: "-10000px",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+          }}
+        >
+          <label htmlFor="hp-website">Website</label>
+          <input
+            id="hp-website"
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            defaultValue=""
+          />
+        </div>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="feedbackText">What should we know?</Label>

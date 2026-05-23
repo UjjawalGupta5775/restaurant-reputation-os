@@ -53,6 +53,15 @@ export async function submitFeedback(
   _prev: FeedbackFormState,
   formData: FormData,
 ): Promise<FeedbackFormState> {
+  // Honeypot — a hidden "website" field rendered off-screen. Real users
+  // never fill it; naive form-spam bots usually do. If non-empty, pretend
+  // the submission succeeded (so the bot doesn't retry with a workaround)
+  // but skip the database write and the analytics event.
+  const honeypot = formData.get("website");
+  if (typeof honeypot === "string" && honeypot.trim().length > 0) {
+    return { ok: true };
+  }
+
   const parsed = feedbackSchema.safeParse({
     businessId: formData.get("businessId"),
     campaignId: formData.get("campaignId") ?? undefined,
