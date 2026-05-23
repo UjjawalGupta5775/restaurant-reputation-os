@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useActionState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { signIn, type AuthState } from "@/lib/actions/auth";
+import { useActionState } from "react";
+import { requestPasswordReset, type AuthState } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,28 +15,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  invite_expired:
-    "That invite link has expired or was already used. Ask your admin to send a new one.",
-  auth_callback_failed:
-    "Sign-in link is no longer valid. Try signing in below.",
-};
-
-function UrlError() {
-  const searchParams = useSearchParams();
-  const urlError = searchParams.get("error");
-  const urlMessage = urlError ? ERROR_MESSAGES[urlError] : null;
-  if (!urlMessage) return null;
-  return (
-    <p role="alert" className="text-sm text-destructive">
-      {urlMessage}
-    </p>
-  );
-}
-
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const [state, action, pending] = useActionState<AuthState, FormData>(
-    signIn,
+    requestPasswordReset,
     undefined,
   );
 
@@ -45,16 +25,16 @@ export default function LoginPage() {
     <main className="flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="font-serif text-xl">Sign in</CardTitle>
+          <CardTitle className="font-serif text-xl">
+            Reset your password
+          </CardTitle>
           <CardDescription>
-            Restaurant owners and admins — sign in to access your dashboard.
+            Enter the email tied to your account. If we recognise it, we&apos;ll
+            send a reset link.
           </CardDescription>
         </CardHeader>
         <form action={action}>
           <CardContent className="space-y-4">
-            <Suspense fallback={null}>
-              <UrlError />
-            </Suspense>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -70,36 +50,26 @@ export default function LoginPage() {
                 </p>
               ))}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-              />
-              {state?.fieldErrors?.password?.map((msg) => (
-                <p key={msg} role="alert" className="text-sm text-destructive">
-                  {msg}
-                </p>
-              ))}
-            </div>
             {state?.error && (
               <p role="alert" className="text-sm text-destructive">
                 {state.error}
               </p>
             )}
+            {state?.info && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {state.info}
+              </p>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={pending}>
-              {pending ? "Signing in…" : "Sign in"}
+              {pending ? "Sending…" : "Send reset link"}
             </Button>
             <Link
-              href="/auth/forgot-password"
+              href="/auth/login"
               className="text-sm text-muted-foreground hover:underline"
             >
-              Forgot password?
+              ← Back to sign in
             </Link>
           </CardFooter>
         </form>

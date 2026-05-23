@@ -41,13 +41,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Already-signed-in users hitting /auth/login (or any /auth/* other than
-  // /auth/callback and /auth/invite) get bounced to /dashboard. The
-  // dashboard layout / admin layout decides where they actually belong.
+  // /auth/callback, /auth/invite, and /auth/reset-password) get bounced to
+  // /dashboard. The recovery flow leaves a session behind on its way to the
+  // reset form, so reset-password has to be reachable while authenticated.
+  // The dashboard layout / admin layout decides where signed-in users
+  // actually belong.
   if (
     claims &&
     isAuthRoute &&
     !path.startsWith("/auth/callback") &&
-    !path.startsWith("/auth/invite")
+    !path.startsWith("/auth/invite") &&
+    !path.startsWith("/auth/reset-password")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
