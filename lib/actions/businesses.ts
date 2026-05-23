@@ -65,8 +65,9 @@ export async function createBusiness(
 ): Promise<BusinessFormState> {
   const scope = parseScope(formData);
   // Defense in depth: server actions bypass route-level layout gating.
-  // createBusiness remains super-admin only — owners can UPDATE their own
-  // business (migration 0005) but cannot INSERT a new one.
+  // createBusiness remains super-admin only — owners use createOwnBusiness
+  // (below), which routes through the create_owner_business RPC so the
+  // membership row is inserted atomically with the business.
   if (scope === "admin") {
     await requireSuperAdmin();
   } else {
@@ -114,6 +115,50 @@ export async function createBusiness(
   }
 
   return { error: "Could not find an available slug. Try a different name." };
+}
+
+// Owner self-serve: create the caller's first restaurant via the
+// create_owner_business RPC (security definer). The RPC inserts the
+// business, the business_members row, and ensures the app_users row in
+// one transaction. Used by /auth/signup (confirm-email path lands here)
+// and by the empty-state form on /dashboard.
+const ownCreateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required.")
+    .max(120, "Name must be 120 characters or fewer."),
+});
+
+export async function createOwnBusiness(
+  _prev: BusinessFormState,
+  formData: FormData,
+): Promise<BusinessFormState> {
+  await verifySession();
+
+  const parsed = ownCreateSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success) {
+    return { fieldErrors: collectFieldErrors(parsed.error) };
+  }
+
+  const supabase = await createClient();
+  const slugBase = baseSlugFor(parsed.data.name);
+  const { data: businessId, error } = await supabase.rpc(
+    "create_owner_business",
+    { p_name: parsed.data.name, p_slug_base: slugBase },
+  );
+
+  if (error || !businessId) {
+    if (error?.message?.includes("slug_exhausted")) {
+      return {
+        error: "Too many restaurants with similar names. Try a more distinctive one.",
+      };
+    }
+    return { error: "Could not create your restaurant. Please try again." };
+  }
+
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/restaurants/${businessId}`);
 }
 
 const updateSchema = businessSchema.extend({

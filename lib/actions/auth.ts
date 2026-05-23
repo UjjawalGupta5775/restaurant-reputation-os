@@ -4,10 +4,21 @@ import { z } from "zod";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { baseSlugFor } from "@/lib/slug";
 
 const credentialsSchema = z.object({
   email: z.email("Enter a valid email."),
   password: z.string().min(8, "Password must be at least 8 characters."),
+});
+
+const signupSchema = z.object({
+  email: z.email("Enter a valid email."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
+  restaurantName: z
+    .string()
+    .trim()
+    .min(1, "Restaurant name is required.")
+    .max(120, "Restaurant name must be 120 characters or fewer."),
 });
 
 const passwordSchema = z.object({
@@ -74,6 +85,60 @@ export async function signIn(
   }
 
   redirect(await landingPathForCurrentUser());
+}
+
+// Self-serve owner signup. Creates the auth user and (if Supabase confirm is
+// disabled and the session is returned immediately) provisions the first
+// restaurant in the same call via the create_owner_business RPC. If email
+// confirmation is enabled, the action returns an info message; the user
+// will create their restaurant from /dashboard once they confirm + sign in.
+export async function signUp(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const parsed = signupSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    restaurantName: formData.get("restaurantName"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: collectFieldErrors(parsed.error) };
+  }
+
+  const supabase = await createClient();
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+  if (signUpError) {
+    return { error: signUpError.message };
+  }
+
+  // No session means Supabase requires the user to confirm their email
+  // before signing in. We can't call the RPC without auth.uid(), so we
+  // stop here — they'll set up their restaurant from /dashboard later.
+  if (!signUpData.session) {
+    return {
+      info: "Almost done — check your email to confirm. Sign in afterwards and you'll be guided through creating your restaurant.",
+    };
+  }
+
+  const slugBase = baseSlugFor(parsed.data.restaurantName);
+  const { data: businessId, error: rpcError } = await supabase.rpc(
+    "create_owner_business",
+    { p_name: parsed.data.restaurantName, p_slug_base: slugBase },
+  );
+  if (rpcError || !businessId) {
+    // The auth user exists but the restaurant wasn't created. Surface the
+    // failure so the user can try again from /dashboard (where the
+    // empty-state form runs the same RPC).
+    return {
+      error:
+        "Your account was created but we couldn't set up your restaurant. Sign in and finish from your dashboard.",
+    };
+  }
+
+  redirect(`/dashboard/restaurants/${businessId}`);
 }
 
 // setInvitePassword: invited users land on /auth/invite already signed in

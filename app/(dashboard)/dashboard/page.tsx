@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { OnboardingForm } from "@/components/dashboard/onboarding-form";
 
 export default async function DashboardPage() {
   const session = await getSessionRole();
@@ -34,14 +35,24 @@ export default async function DashboardPage() {
           </p>
         </header>
         <Card>
-          <CardContent className="py-10 text-center">
-            <p className="font-serif italic text-base text-muted-foreground max-w-md mx-auto">
-              You don&apos;t have access to any restaurants yet. Your admin
-              will link your account to a restaurant — once they do, refresh
-              this page.
-            </p>
+          <CardHeader>
+            <CardTitle className="font-serif text-xl">
+              Create your first restaurant
+            </CardTitle>
+            <CardDescription>
+              You&apos;ll get an analytics dashboard, a QR-ready review
+              funnel, and a private feedback inbox the moment you create
+              it.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OnboardingForm />
           </CardContent>
         </Card>
+        <p className="text-center text-xs text-muted-foreground">
+          Were you invited to manage an existing restaurant? Your admin
+          will link your account — once they do, refresh this page.
+        </p>
       </div>
     );
   }
