@@ -32,10 +32,21 @@ jobs:
         run: npm run lint
 
       - name: Build
-        # Build needs the Supabase env vars to be set so the server/browser
-        # clients can initialise. Real secrets aren't needed at build time —
-        # the build only needs them to be non-empty strings.
+        # Build needs many env vars to be set as non-empty strings so the
+        # server/browser clients + provider adapters can initialise during
+        # static-page collection. Real secrets aren't needed at build time —
+        # @supabase/supabase-js v2 throws at createClient() when the key is
+        # missing, which crashes any imported page. Same shape of guard in
+        # the Lemon Squeezy adapter (lazy, but defensive) and the cron route.
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          LEMONSQUEEZY_API_KEY: ci-placeholder
+          LEMONSQUEEZY_STORE_ID: "0"
+          LEMONSQUEEZY_VARIANT_ID: "0"
+          LEMONSQUEEZY_WEBHOOK_SECRET: ci-placeholder
+          CRON_SECRET: ci-placeholder
         run: npm run build
