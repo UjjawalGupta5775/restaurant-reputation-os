@@ -225,7 +225,7 @@ export function GoogleReviewPanel({
           disabled={text.length === 0}
           className="min-h-11 w-full flex-1 px-4 text-sm sm:w-auto"
         >
-          {copied ? "Copied!" : "Copy text"}
+          {copied ? "Copied!" : "Copy draft"}
         </Button>
         <Button
           type="button"
@@ -233,7 +233,7 @@ export function GoogleReviewPanel({
           disabled={noUrl}
           className="min-h-11 w-full flex-1 px-4 text-sm sm:w-auto"
         >
-          Copy &amp; open Google
+          Post on Google
         </Button>
       </CardFooter>
     </Card>

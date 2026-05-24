@@ -1,6 +1,6 @@
-# Restaurant Reputation OS
+# Reputation OS
 
-QR-based feedback funnel for restaurants. Customers scan a table QR, rate their visit, and choose between leaving a Google review (with assistance — never auto-submitted) or sending private feedback to the owner. Owners get a dashboard with rating funnel, daily scan volume, and a private feedback inbox.
+QR-based feedback funnel for any local business. Customers scan a QR, rate their visit, and choose between leaving a Google review (with assistance — never auto-submitted) or sending private feedback to the owner. Owners get a dashboard with rating funnel, daily scan volume, and a private feedback inbox.
 
 **Hard product rules:**
 - The platform never auto-submits reviews to Google. The customer controls submission and can edit suggested text.
@@ -57,7 +57,7 @@ Migrations live in `supabase/migrations/`. Apply them in order against your Supa
 
 ## Authentication model (Phase 4A RBAC)
 
-- **Super-admin** seats restaurant owners via invite-only email flow. No public self-signup.
+- **Super-admin** seats business owners via invite-only email flow. No public self-signup.
 - **Owners** see only their own business via RLS (`has_business_access` helper).
 - **Anonymous customers** can insert into `feedback_submissions` and `analytics_events` (firehose); cannot read anything.
 
