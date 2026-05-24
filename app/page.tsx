@@ -20,12 +20,12 @@ export default function HomePage() {
         >
           Sign in
         </Link>
-        <a
-          href="mailto:hello@example.com?subject=Reputation%20OS%20access%20request"
+        <Link
+          href="/auth/signup"
           className={buttonVariants({ variant: "outline" })}
         >
-          Request access
-        </a>
+          Sign up
+        </Link>
       </div>
     </main>
   );

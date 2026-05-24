@@ -2,7 +2,19 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Next 16 blocks cross-origin requests to dev-only assets by default, which
+  // breaks RSC navigation, server actions, and hydration when the dev server
+  // is reached through a tunnel (ngrok, Cloudflare, lt, etc). Static HTML still
+  // renders, so it looks like the page works until you try to click anything.
+  // Allowing common dev-tunnel domains keeps `npm run dev` reachable from a
+  // phone, a colleague, or a webhook tester. Has no effect in production.
+  allowedDevOrigins: [
+    "*.ngrok-free.app",
+    "*.ngrok.app",
+    "*.ngrok.io",
+    "*.trycloudflare.com",
+    "*.loca.lt",
+  ],
 };
 
 // withSentryConfig is safe to apply unconditionally — when SENTRY_DSN /
