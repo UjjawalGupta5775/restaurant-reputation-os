@@ -24,7 +24,7 @@ export default async function UnsubscribePage(props: {
             Unsubscribe from weekly summaries
           </CardTitle>
           <CardDescription>
-            Reputation OS sends a short weekly recap to restaurant owners.
+            Reputation OS sends a short weekly recap to business owners.
             You can turn it off here.
           </CardDescription>
         </CardHeader>

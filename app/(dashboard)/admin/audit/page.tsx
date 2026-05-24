@@ -82,7 +82,7 @@ export default async function AdminAuditPage() {
                 <th className="px-4 py-3 font-medium">When</th>
                 <th className="px-4 py-3 font-medium">Action</th>
                 <th className="px-4 py-3 font-medium">Actor</th>
-                <th className="px-4 py-3 font-medium">Restaurant</th>
+                <th className="px-4 py-3 font-medium">Business</th>
                 <th className="px-4 py-3 font-medium">Detail</th>
               </tr>
             </thead>

@@ -28,7 +28,7 @@ export function DigestToggleForm({ initialEnabled }: Props) {
           <p className="font-medium">Weekly summary email</p>
           <p className="text-sm text-muted-foreground">
             Every Monday, a short recap of last week&apos;s activity across
-            your restaurants. Sent to the email on your account.
+            your businesses. Sent to the email on your account.
           </p>
           <p className="text-xs text-muted-foreground">
             Currently:{" "}

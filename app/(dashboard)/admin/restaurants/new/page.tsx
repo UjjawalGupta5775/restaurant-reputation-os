@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { RestaurantForm } from "@/components/dashboard/restaurant-form";
 
-export default function NewRestaurantPage() {
+export default function NewBusinessPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>

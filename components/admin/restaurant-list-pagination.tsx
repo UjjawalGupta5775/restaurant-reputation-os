@@ -36,7 +36,7 @@ export function AdminRestaurantListPagination({
   if (totalPages <= 1) {
     return (
       <p className="text-sm text-muted-foreground">
-        Showing {total} {total === 1 ? "restaurant" : "restaurants"}.
+        Showing {total} {total === 1 ? "business" : "businesses"}.
       </p>
     );
   }

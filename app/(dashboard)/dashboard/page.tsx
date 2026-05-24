@@ -20,11 +20,11 @@ export default async function DashboardPage() {
   const businesses = await listBusinessesForOwner();
 
   // Owner-scope rendering:
-  // 0 restaurants → "no access yet" empty state (an invited owner whose
+  // 0 businesses → "no access yet" empty state (an invited owner whose
   //   admin hasn't linked them to anything yet, or a stale invite).
-  // 1 restaurant → jump straight to that restaurant's analytics page.
+  // 1 business → jump straight to that business's analytics page.
   //   Single-property owners shouldn't need a list view.
-  // 2+ restaurants → list view (multi-property operator).
+  // 2+ businesses → list view (multi-property operator).
   if (businesses.length === 1) {
     redirect(`/dashboard/restaurants/${businesses[0].id}`);
   }
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-serif text-xl">
-              Create your first restaurant
+              Create your first business
             </CardTitle>
             <CardDescription>
               You&apos;ll get an analytics dashboard, a QR-ready review
@@ -54,23 +54,23 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
         <p className="text-center text-xs text-muted-foreground">
-          Were you invited to manage an existing restaurant? Your admin
+          Were you invited to manage an existing business? Your admin
           will link your account — once they do, refresh this page.
         </p>
       </div>
     );
   }
 
-  // Multi-restaurant owner: surface any operational billing problems at the
-  // top so they aren't trapped behind clicking into each restaurant. Healthy
-  // subscriptions render nothing. Single-restaurant owners are auto-redirected
+  // Multi-business owner: surface any operational billing problems at the
+  // top so they aren't trapped behind clicking into each business. Healthy
+  // subscriptions render nothing. Single-business owners are auto-redirected
   // to their detail page above, so this banner area is multi-only.
   //
   // Display strategy:
   //   1 affected  → show the full BillingBanner with name header + CTA
   //                 (drilling into the fix from here is one click).
   //   2+ affected → show a single aggregate strip linking to
-  //                 /dashboard/billing, where each restaurant's status
+  //                 /dashboard/billing, where each business's status
   //                 renders individually. Avoids the dashboard becoming
   //                 a wall of stacked amber bars.
   const banners = await Promise.all(
@@ -102,9 +102,9 @@ export default async function DashboardPage() {
       )}
 
       <header className="space-y-2">
-        <h1 className="font-serif text-3xl tracking-tight">Your restaurants</h1>
+        <h1 className="font-serif text-3xl tracking-tight">Your businesses</h1>
         <p className="text-sm text-muted-foreground">
-          Pick a restaurant to view its analytics, campaigns, and feedback.
+          Pick a business to view its analytics, campaigns, and feedback.
         </p>
       </header>
 

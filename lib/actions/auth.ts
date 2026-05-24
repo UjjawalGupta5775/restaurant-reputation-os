@@ -17,8 +17,8 @@ const signupSchema = z.object({
   restaurantName: z
     .string()
     .trim()
-    .min(1, "Restaurant name is required.")
-    .max(120, "Restaurant name must be 120 characters or fewer."),
+    .min(1, "Business name is required.")
+    .max(120, "Business name must be 120 characters or fewer."),
 });
 
 const passwordSchema = z.object({
@@ -110,9 +110,9 @@ export async function signIn(
 
 // Self-serve owner signup. Creates the auth user and (if Supabase confirm is
 // disabled and the session is returned immediately) provisions the first
-// restaurant in the same call via the create_owner_business RPC. If email
+// business in the same call via the create_owner_business RPC. If email
 // confirmation is enabled, the action returns an info message; the user
-// will create their restaurant from /dashboard once they confirm + sign in.
+// will create their business from /dashboard once they confirm + sign in.
 export async function signUp(
   _prev: AuthState,
   formData: FormData,
@@ -145,10 +145,10 @@ export async function signUp(
 
   // No session means Supabase requires the user to confirm their email
   // before signing in. We can't call the RPC without auth.uid(), so we
-  // stop here — they'll set up their restaurant from /dashboard later.
+  // stop here — they'll set up their business from /dashboard later.
   if (!signUpData.session) {
     return {
-      info: "Almost done — check your email to confirm. Sign in afterwards and you'll be guided through creating your restaurant.",
+      info: "Almost done — check your email to confirm. Sign in afterwards and you'll be guided through creating your business.",
     };
   }
 
@@ -158,12 +158,12 @@ export async function signUp(
     { p_name: parsed.data.restaurantName, p_slug_base: slugBase },
   );
   if (rpcError || !businessId) {
-    // The auth user exists but the restaurant wasn't created. Surface the
+    // The auth user exists but the business wasn't created. Surface the
     // failure so the user can try again from /dashboard (where the
     // empty-state form runs the same RPC).
     return {
       error:
-        "Your account was created but we couldn't set up your restaurant. Sign in and finish from your dashboard.",
+        "Your account was created but we couldn't set up your business. Sign in and finish from your dashboard.",
     };
   }
 

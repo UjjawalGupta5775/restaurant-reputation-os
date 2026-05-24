@@ -26,7 +26,7 @@ type Props = {
 };
 
 const TOKEN_HELP =
-  "Tokens you can use: {{name}}, {{rating}}, {{restaurant}}. They're substituted when you copy a reply.";
+  "Tokens you can use: {{name}}, {{rating}}, {{business}}. They're substituted when you copy a reply.";
 
 export function TemplateManager({ businessId, templates }: Props) {
   return (

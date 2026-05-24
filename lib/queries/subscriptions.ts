@@ -129,7 +129,7 @@ export async function getOperationalStatusPublic(
       tags: { area: "subscriptions", op: "getOperationalStatusPublic" },
     });
     // Fail OPEN on read errors. A transient Supabase blip should not
-    // hide a paying restaurant's funnel from a customer at the table.
+    // hide a paying business's funnel from a customer at the table.
     // The owner-side gates remain strict; this surface biases toward
     // not punishing customers for our infrastructure problems.
     return { ok: true, reason: "active" };

@@ -29,8 +29,8 @@ function parsePage(value: string | undefined): number {
 
 // Build /admin/feedback URLs preserving rating + period + page state. The
 // owner-side FeedbackFilterBar/FeedbackPagination are hard-coded to the
-// /restaurants/[id]/feedback path, so we re-implement those controls
-// inline rather than refactoring shared components.
+// /restaurants/[id]/feedback path (the URL is unchanged), so we re-implement
+// those controls inline rather than refactoring shared components.
 function adminFeedbackHref(opts: {
   rating?: number | null;
   period?: Period;
@@ -98,7 +98,7 @@ export default async function AdminFeedbackPage({
                 result.total === 1 ? "" : "s"
               }${filtered ? ` rated ${rating} ★` : ""}${
                 windowed ? ` · ${windowLabel}` : ""
-              } across all restaurants.`}
+              } across all businesses.`}
         </p>
       </header>
 
@@ -135,7 +135,7 @@ export default async function AdminFeedbackPage({
                 <>
                   No customers submitted feedback at {rating} ★
                   {windowed ? ` ${windowLabel}` : " yet"} across any
-                  restaurant. Try a different filter or view{" "}
+                  business. Try a different filter or view{" "}
                   <Link
                     href={adminFeedbackHref({ rating: null, period })}
                     className="underline"
@@ -154,7 +154,7 @@ export default async function AdminFeedbackPage({
                 </>
               ) : (
                 <>
-                  As soon as a customer on any restaurant&apos;s funnel sends
+                  As soon as a customer on any business&apos;s funnel sends
                   private feedback, it will appear here.
                 </>
               )}

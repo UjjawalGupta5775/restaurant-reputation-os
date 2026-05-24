@@ -102,7 +102,7 @@ export async function listFeedbackForRestaurant(
 }
 
 // Platform-wide variant for /admin/feedback. Same shape plus a `business`
-// pointer so the cross-tenant view can show which restaurant each row
+// pointer so the cross-tenant view can show which business each row
 // belongs to. RLS already gates: feedback_submissions is super-admin
 // only by policy, so a non-admin call returns an empty page.
 export type AdminFeedbackRow = FeedbackRow & {

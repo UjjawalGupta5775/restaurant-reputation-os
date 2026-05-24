@@ -9,14 +9,14 @@ type Props = {
   currentBusinessId: string;
 };
 
-// Context switcher for owners who have access to multiple restaurants.
-// One restaurant: static label. Two or more: a native select that navigates
+// Context switcher for owners who have access to multiple businesses.
+// One business: static label. Two or more: a native select that navigates
 // on change. Native <select> matches the existing form aesthetic and avoids
 // pulling in a portal-based dropdown primitive.
 //
 // Carries the current URL search params through on switch so settings like
 // ?period=today survive the navigation — otherwise picking "Today" then
-// switching restaurants silently reverts to the 30-day default.
+// switching businesses silently reverts to the 30-day default.
 function RestaurantSwitcherInner({ restaurants, currentBusinessId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,10 +36,10 @@ function RestaurantSwitcherInner({ restaurants, currentBusinessId }: Props) {
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-        Restaurant
+        Business
       </span>
       <select
-        aria-label="Switch restaurant"
+        aria-label="Switch business"
         value={currentBusinessId}
         onChange={(e) => {
           const nextId = e.target.value;

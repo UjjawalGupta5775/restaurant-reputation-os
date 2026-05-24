@@ -8,7 +8,7 @@ type CopyState = "idle" | "copied" | "failed";
 
 // Some browsers (older Safari, non-HTTPS contexts) don't expose the async
 // Clipboard API. Fall back to the legacy execCommand path so the button
-// still works on the long tail of devices a restaurant owner might have.
+// still works on the long tail of devices a business owner might have.
 async function copyText(text: string): Promise<boolean> {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     try {

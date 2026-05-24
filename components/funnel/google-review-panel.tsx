@@ -212,7 +212,7 @@ export function GoogleReviewPanel({
         )}
         {noUrl && (
           <p className="text-xs text-muted-foreground">
-            This restaurant hasn&apos;t set up a Google review link yet — you
+            This business hasn&apos;t set up a Google review link yet — you
             can still send private feedback below.
           </p>
         )}

@@ -23,12 +23,12 @@ export default async function PublicRestaurantPage({
   const business = await getBusinessBySlugPublic(slug);
   if (!business) notFound();
 
-  // Subscription gate. If the restaurant isn't on an operational plan
+  // Subscription gate. If the business isn't on an operational plan
   // (lapsed trial with no card, payment failed past grace, canceled
   // past grace), render a calm "reviews paused" notice instead of the
   // full funnel. We deliberately do NOT 404 — a missing-page interstitial
   // would look broken to a customer at the table. The notice tells them
-  // nothing is wrong with the restaurant, just that this surface isn't
+  // nothing is wrong with the business, just that this surface isn't
   // active right now.
   const access = await getOperationalStatusPublic(business.id);
   if (!access.ok) {

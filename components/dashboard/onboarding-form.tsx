@@ -18,7 +18,7 @@ export function OnboardingForm() {
   return (
     <form action={action} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Restaurant name</Label>
+        <Label htmlFor="name">Business name</Label>
         <Input
           id="name"
           name="name"
@@ -40,7 +40,7 @@ export function OnboardingForm() {
         </p>
       )}
       <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Creating…" : "Create restaurant"}
+        {pending ? "Creating…" : "Create business"}
       </Button>
     </form>
   );

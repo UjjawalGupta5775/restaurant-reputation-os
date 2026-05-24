@@ -13,7 +13,7 @@ const LIMITS: Record<Bucket, { max: number; windowSeconds: number }> = {
   // tripping; anything faster is almost certainly a script.
   feedback: { max: 8, windowSeconds: 60 * 60 },
   // A complete funnel run emits ~10 events in ~20 seconds. 300/min/IP
-  // supports ~30 concurrent funnels on one IP — fine for shared restaurant
+  // supports ~30 concurrent funnels on one IP — fine for shared business
   // WiFi at peak, but cuts off a scraper hammering the action.
   event: { max: 300, windowSeconds: 60 },
 };

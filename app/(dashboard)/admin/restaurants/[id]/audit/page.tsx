@@ -5,15 +5,15 @@ import { listAuditForBusiness } from "@/lib/queries/audit";
 import { Card, CardContent } from "@/components/ui/card";
 import { absoluteTime, relativeTime } from "@/lib/format";
 
-// Per-restaurant audit log. Mirrors the column shape of /admin/audit
+// Per-business audit log. Mirrors the column shape of /admin/audit
 // (the global view) but with a single-business filter, pagination, and
-// no Restaurant column (it's redundant on a per-restaurant page).
+// no Business column (it's redundant on a per-business page).
 //
 // Why this exists separately from /admin/audit
 // --------------------------------------------
 // The global view is the "what just happened across the platform"
 // firehose — useful for spotting incidents, NOT for support cases. When
-// a customer or owner files a ticket about restaurant X, the operator
+// a customer or owner files a ticket about business X, the operator
 // wants every action on X in chronological order, paginated. That's
 // this page.
 
@@ -107,7 +107,7 @@ export default async function AdminRestaurantAuditPage({
         <Card>
           <CardContent className="py-10 text-center">
             <p className="font-serif italic text-base text-muted-foreground max-w-md mx-auto">
-              No audit entries yet for this restaurant.
+              No audit entries yet for this business.
             </p>
           </CardContent>
         </Card>

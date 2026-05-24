@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-// Aggregate billing strip for owners with multiple restaurants needing
-// attention. Rendered at the top of /dashboard when 2+ restaurants have
-// an actionable billing banner. Single-restaurant attention still uses
-// the full BillingBanner (with CTA) — drilling into one restaurant for
+// Aggregate billing strip for owners with multiple businesses needing
+// attention. Rendered at the top of /dashboard when 2+ businesses have
+// an actionable billing banner. Single-business attention still uses
+// the full BillingBanner (with CTA) — drilling into one business for
 // one fix is fine. The aggregate form prevents the dashboard from being
 // a stack of 4 amber bars when an owner with 6 locations has 3 cards
 // failing simultaneously.
@@ -20,7 +20,7 @@ export function OwnerBillingAttentionSummary({ count }: Props) {
     >
       <div className="min-w-0 space-y-0.5">
         <p className="text-sm font-medium">
-          {count} restaurants need billing attention
+          {count} businesses need billing attention
         </p>
         <p className="text-sm text-muted-foreground">
           Review each one&apos;s status and fix payment or subscription issues.

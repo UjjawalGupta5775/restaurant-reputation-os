@@ -129,7 +129,7 @@ export async function createBusiness(
   return { error: "Could not find an available slug. Try a different name." };
 }
 
-// Owner self-serve: create the caller's first restaurant via the
+// Owner self-serve: create the caller's first business via the
 // create_owner_business RPC (security definer). The RPC inserts the
 // business, the business_members row, and ensures the app_users row in
 // one transaction. Used by /auth/signup (confirm-email path lands here)
@@ -163,10 +163,10 @@ export async function createOwnBusiness(
   if (error || !businessId) {
     if (error?.message?.includes("slug_exhausted")) {
       return {
-        error: "Too many restaurants with similar names. Try a more distinctive one.",
+        error: "Too many businesses with similar names. Try a more distinctive one.",
       };
     }
-    return { error: "Could not create your restaurant. Please try again." };
+    return { error: "Could not create your business. Please try again." };
   }
 
   await recordAudit({
@@ -183,7 +183,7 @@ export async function createOwnBusiness(
 }
 
 const updateSchema = businessSchema.extend({
-  id: z.uuid("Invalid restaurant id."),
+  id: z.uuid("Invalid business id."),
 });
 
 // Owner-scoped update is narrower than admin-scoped update. Field whitelist
@@ -195,7 +195,7 @@ const updateSchema = businessSchema.extend({
 // owners need to be able to wire up their own Google review CTA without
 // gating on admin support.
 const ownerUpdateSchema = z.object({
-  id: z.uuid("Invalid restaurant id."),
+  id: z.uuid("Invalid business id."),
   name: z
     .string()
     .trim()
@@ -271,7 +271,7 @@ export async function updateBusiness(
 
     if (error) return { error: error.message };
     if (!data || data.length === 0) {
-      return { error: "You don't have access to that restaurant." };
+      return { error: "You don't have access to that business." };
     }
 
     await recordAudit({
@@ -334,7 +334,7 @@ export async function updateBusiness(
 
   if (error) return { error: error.message };
   if (!data || data.length === 0) {
-    return { error: "You don't have access to that restaurant." };
+    return { error: "You don't have access to that business." };
   }
 
   await recordAudit({
@@ -387,7 +387,7 @@ export async function updateBusinessLogo(
 ): Promise<LogoFormState> {
   const idRaw = formData.get("id");
   if (typeof idRaw !== "string" || !z.uuid().safeParse(idRaw).success) {
-    return { error: "Invalid restaurant id." };
+    return { error: "Invalid business id." };
   }
   const session = await requireBusinessAccess(idRaw);
 
@@ -426,7 +426,7 @@ export async function updateBusinessLogo(
     .select("id");
   if (updateError) return { error: updateError.message };
   if (!data || data.length === 0) {
-    return { error: "You don't have access to that restaurant." };
+    return { error: "You don't have access to that business." };
   }
 
   await recordAudit({
@@ -452,7 +452,7 @@ export async function clearBusinessLogo(
 ): Promise<LogoFormState> {
   const idRaw = formData.get("id");
   if (typeof idRaw !== "string" || !z.uuid().safeParse(idRaw).success) {
-    return { error: "Invalid restaurant id." };
+    return { error: "Invalid business id." };
   }
   const session = await requireBusinessAccess(idRaw);
 
@@ -469,7 +469,7 @@ export async function clearBusinessLogo(
     .select("id");
   if (error) return { error: error.message };
   if (!data || data.length === 0) {
-    return { error: "You don't have access to that restaurant." };
+    return { error: "You don't have access to that business." };
   }
 
   await recordAudit({

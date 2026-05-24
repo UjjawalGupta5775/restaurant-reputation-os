@@ -7,11 +7,11 @@ import { deriveBanner, evaluateAccess } from "@/lib/billing/state";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-// Multi-restaurant billing summary. Reached from the aggregate strip
-// on /dashboard. Single-restaurant owners shouldn't end up here — their
-// /dashboard auto-redirects to the restaurant detail page where billing
+// Multi-business billing summary. Reached from the aggregate strip
+// on /dashboard. Single-business owners shouldn't end up here — their
+// /dashboard auto-redirects to the business detail page where billing
 // lives. If they navigate here directly, we still render the row but
-// also redirect single-restaurant owners straight to their billing
+// also redirect single-business owners straight to their billing
 // surface (the goal of this page is the multi case).
 export default async function OwnerBillingSummaryPage() {
   await verifySession();
@@ -56,7 +56,7 @@ export default async function OwnerBillingSummaryPage() {
       <header className="space-y-2">
         <h1 className="font-serif text-3xl tracking-tight">Billing</h1>
         <p className="text-sm text-muted-foreground">
-          Each restaurant has its own subscription. Click through to manage
+          Each business has its own subscription. Click through to manage
           a specific one.
         </p>
       </header>

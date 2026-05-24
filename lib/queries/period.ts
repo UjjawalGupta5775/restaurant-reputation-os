@@ -1,10 +1,10 @@
-// Time-window filter for the restaurant analytics surface. URL search-param
+// Time-window filter for the business analytics surface. URL search-param
 // `?period=today|yesterday|7d|30d` is parsed via parsePeriod() in the page,
 // then resolved to UTC bounds via periodRange() before hitting the DB.
 //
 // UTC throughout — the businesses table has no timezone column yet, so
 // "Today" tracks UTC days. Acceptable for v1; revisit once we surface
-// per-restaurant timezone.
+// per-business timezone.
 //
 // No "server-only" guard here: the period picker (client component) needs
 // PERIOD_OPTIONS / parsePeriod() too. Pure functions, no secrets, safe to

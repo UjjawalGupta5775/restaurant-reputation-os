@@ -30,7 +30,7 @@ export function RestaurantForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-xl">New restaurant</CardTitle>
+        <CardTitle className="font-serif text-xl">New business</CardTitle>
         <CardDescription>
           The name becomes your public link slug. You can edit other details
           later.
@@ -40,7 +40,7 @@ export function RestaurantForm({
         <input type="hidden" name="scope" value={scope} />
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Restaurant name</Label>
+            <Label htmlFor="name">Business name</Label>
             <Input
               id="name"
               name="name"
@@ -104,7 +104,7 @@ export function RestaurantForm({
             disabled={pending}
             className="w-full sm:w-auto"
           >
-            {pending ? "Creating…" : "Create restaurant"}
+            {pending ? "Creating…" : "Create business"}
           </Button>
         </CardFooter>
       </form>

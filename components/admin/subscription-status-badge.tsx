@@ -4,7 +4,7 @@ import type {
 } from "@/lib/billing/state";
 import { cn } from "@/lib/utils";
 
-// Tiny badge for the admin restaurant grid + restaurant detail header.
+// Tiny badge for the admin business grid + business detail header.
 // Reflects both the raw status and the access verdict — a 'canceled'
 // row inside its grace window reads differently from one that's expired.
 

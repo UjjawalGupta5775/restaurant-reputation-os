@@ -17,12 +17,14 @@ function substitute(
   body: string,
   context: Props["context"],
 ): string {
-  // Tokens: {{name}} | {{rating}} | {{restaurant}}. Whitespace inside
-  // braces is tolerated so owners can type {{ name }} interchangeably.
+  // Tokens: {{name}} | {{rating}} | {{business}} (alias: {{restaurant}}).
+  // Whitespace inside braces is tolerated so owners can type {{ name }}
+  // interchangeably. {{restaurant}} stays as a silent alias so existing
+  // templates keep working after the rename to {{business}}.
   return body
     .replace(/\{\{\s*name\s*\}\}/gi, context.contactName?.trim() || "there")
     .replace(/\{\{\s*rating\s*\}\}/gi, String(context.rating))
-    .replace(/\{\{\s*restaurant\s*\}\}/gi, context.restaurantName);
+    .replace(/\{\{\s*(business|restaurant)\s*\}\}/gi, context.restaurantName);
 }
 
 export function FeedbackReplyCopy({ templates, context }: Props) {

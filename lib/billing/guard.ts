@@ -9,7 +9,7 @@ import { getSubscriptionForBusiness } from "@/lib/queries/subscriptions";
 // trials, and canceled subs all land here and the owner-facing billing
 // page disambiguates with the precise reason.
 export const SUBSCRIPTION_REQUIRED_MESSAGE =
-  "This restaurant's subscription isn't active. Open Billing to start or restore a plan before making changes.";
+  "This business's subscription isn't active. Open Billing to start or restore a plan before making changes.";
 
 // Returns null when the actor may proceed (super-admins always may,
 // owners only when evaluateAccess(sub).ok is true). Returns the canonical

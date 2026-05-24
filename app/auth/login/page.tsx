@@ -60,7 +60,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="font-serif text-xl">Sign in</CardTitle>
           <CardDescription>
-            Restaurant owners and admins — sign in to access your dashboard.
+            Business owners and admins — sign in to access your dashboard.
           </CardDescription>
         </CardHeader>
         <form action={action}>

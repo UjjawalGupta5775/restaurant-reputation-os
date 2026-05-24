@@ -33,7 +33,7 @@ export default async function ReviewPromptsPage({
           href={`/dashboard/restaurants/${business.id}`}
           className="rounded-sm text-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
         >
-          ← Back to restaurant
+          ← Back to business
         </Link>
       </div>
 
@@ -45,7 +45,7 @@ export default async function ReviewPromptsPage({
           The tap-to-append phrases customers see after they pick a star
           rating on /r/{business.slug}. Editing these helps reviews
           mention what makes {business.name} different — instead of the
-          same generic words every other restaurant uses.
+          same generic words every other business uses.
         </p>
       </header>
 

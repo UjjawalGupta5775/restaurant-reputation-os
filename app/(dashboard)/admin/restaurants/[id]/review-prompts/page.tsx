@@ -37,7 +37,7 @@ export default async function AdminReviewPromptsPage({
           href={`/admin/restaurants/${business.id}`}
           className="rounded-sm text-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
         >
-          ← Back to restaurant
+          ← Back to business
         </Link>
       </div>
 

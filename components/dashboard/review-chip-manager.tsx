@@ -108,7 +108,7 @@ function SettingsForm({
             </select>
             <p className="text-xs text-muted-foreground">
               Random rotates which chips appear first so high-traffic
-              restaurants get varied reviews instead of the same phrases.
+              businesses get varied reviews instead of the same phrases.
             </p>
           </div>
 

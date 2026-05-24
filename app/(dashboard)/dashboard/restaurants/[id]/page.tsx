@@ -142,7 +142,7 @@ export default async function RestaurantDetailPage({
             <h2 className="font-serif text-xl tracking-tight">Campaigns</h2>
             <p className="text-sm text-muted-foreground">
               Each campaign is a QR placement for a specific spot in your
-              restaurant.
+              business.
             </p>
           </div>
           <Link

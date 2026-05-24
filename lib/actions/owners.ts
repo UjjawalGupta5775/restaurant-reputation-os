@@ -17,7 +17,7 @@ export type OwnerActionState =
   | undefined;
 
 const inviteSchema = z.object({
-  businessId: z.uuid("Invalid restaurant id."),
+  businessId: z.uuid("Invalid business id."),
   email: z.email("Enter a valid email."),
 });
 
@@ -108,7 +108,7 @@ export async function inviteOwner(
 
   const { businessId, email } = parsed.data;
 
-  // Sanity: the restaurant exists. Uses service role so super-admin
+  // Sanity: the business exists. Uses service role so super-admin
   // visibility doesn't depend on the upcoming RLS swap.
   const { data: business } = await supabaseAdmin
     .from("businesses")
@@ -116,7 +116,7 @@ export async function inviteOwner(
     .eq("id", businessId)
     .maybeSingle();
   if (!business) {
-    return { error: "Restaurant not found." };
+    return { error: "Business not found." };
   }
 
   let userId: string | null = null;

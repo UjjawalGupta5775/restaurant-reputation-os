@@ -30,7 +30,7 @@ export default async function OwnerRestaurantEditPage({
       <header className="space-y-2">
         <h1 className="font-serif text-3xl tracking-tight">Edit details</h1>
         <p className="text-sm text-muted-foreground">
-          Update name and operational details for this restaurant.
+          Update name and operational details for this business.
         </p>
       </header>
 

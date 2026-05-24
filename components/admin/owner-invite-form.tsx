@@ -29,7 +29,7 @@ export function OwnerInviteForm({ businessId }: { businessId: string }) {
         <CardTitle className="font-serif text-xl">Invite an owner</CardTitle>
         <CardDescription>
           Sends a Supabase invite email. If the address already has an account,
-          they&apos;re added to this restaurant without re-sending an email.
+          they&apos;re added to this business without re-sending an email.
         </CardDescription>
       </CardHeader>
       <form action={action}>

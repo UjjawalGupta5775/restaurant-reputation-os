@@ -86,15 +86,15 @@ export default async function AdminHomePage({
     <div className="space-y-10">
       <div className="flex items-end justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="font-serif text-3xl tracking-tight">All restaurants</h1>
+          <h1 className="font-serif text-3xl tracking-tight">All businesses</h1>
           <p className="text-sm text-muted-foreground">
-            Every restaurant on the platform. Create new ones, edit settings,
+            Every business on the platform. Create new ones, edit settings,
             and manage owners from here.
           </p>
         </div>
         <div className="flex items-center gap-3">
           {/* /admin/feedback intentionally NOT linked here. The cross-tenant
-              firehose is noise for daily admin work; per-restaurant feedback
+              firehose is noise for daily admin work; per-business feedback
               lives under /admin/restaurants/[id]/feedback. The route stays
               reachable for support escalations that include a direct URL. */}
           <Link
@@ -104,7 +104,7 @@ export default async function AdminHomePage({
             Audit log
           </Link>
           <Link href="/admin/restaurants/new" className={buttonVariants()}>
-            New restaurant
+            New business
           </Link>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default async function AdminHomePage({
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-serif text-xl tracking-tight">Restaurants</h2>
+        <h2 className="font-serif text-xl tracking-tight">Businesses</h2>
 
         <AdminRestaurantListControls
           initialSearch={search}
@@ -131,8 +131,8 @@ export default async function AdminHomePage({
             <CardContent className="py-10 text-center">
               <p className="font-serif italic text-base text-muted-foreground max-w-sm mx-auto">
                 {search || status !== "all"
-                  ? "No restaurants match the current filters."
-                  : "No restaurants yet. Add the first one to start onboarding owners."}
+                  ? "No businesses match the current filters."
+                  : "No businesses yet. Add the first one to start onboarding owners."}
               </p>
               {!search && status === "all" && (
                 <div className="mt-6">
@@ -140,7 +140,7 @@ export default async function AdminHomePage({
                     href="/admin/restaurants/new"
                     className={buttonVariants()}
                   >
-                    Add first restaurant
+                    Add first business
                   </Link>
                 </div>
               )}

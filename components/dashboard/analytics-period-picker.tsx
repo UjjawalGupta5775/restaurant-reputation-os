@@ -6,7 +6,7 @@ import { PERIOD_OPTIONS, parsePeriod, type Period } from "@/lib/queries/period";
 import { cn } from "@/lib/utils";
 
 // URL-driven analytics window picker. Lives above the KPI strip on the
-// restaurant detail page. `?period=today|yesterday|7d|30d` is the single
+// business detail page. `?period=today|yesterday|7d|30d` is the single
 // source of truth — every KPI / funnel / chart query downstream reads it.
 
 function PeriodPickerInner() {

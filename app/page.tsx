@@ -9,7 +9,7 @@ export default function HomePage() {
           Restaurant Reputation OS
         </h1>
         <p className="text-muted-foreground">
-          Turn real dining experiences into public reviews and operational
+          Turn real customer experiences into public reviews and operational
           insights — without compromising authenticity.
         </p>
       </div>

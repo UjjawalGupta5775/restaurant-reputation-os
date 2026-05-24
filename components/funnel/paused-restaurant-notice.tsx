@@ -2,10 +2,10 @@
 // /r/[slug] when getOperationalStatusPublic returns ok=false.
 //
 // Copy intentionally avoids internal language ("subscription", "billing",
-// "payment failed", "trial expired"). To the customer at the table, the
-// surface is just paused; the restaurant exists and might be back soon.
-// Anything more specific would either embarrass the owner or invite
-// "why don't you pay" comments to staff.
+// "payment failed", "trial expired"). To the customer, the surface is
+// just paused; the business exists and might be back soon. Anything more
+// specific would either embarrass the owner or invite "why don't you pay"
+// comments to staff.
 
 type Props = {
   businessName: string;

@@ -22,7 +22,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Reputation OS",
   description:
-    "Restaurant reputation that respects the room — QR-based ratings, an assisted Google review path, and private feedback that never gets auto-posted.",
+    "Reputation that respects the room — QR-based ratings, an assisted Google review path, and private feedback that never gets auto-posted.",
 };
 
 export default function RootLayout({

@@ -22,7 +22,7 @@ export type UserDigest = {
 };
 
 // Aggregate the last 7 days of activity for a single user across every
-// restaurant they're a member of. Uses the service role intentionally —
+// business they're a member of. Uses the service role intentionally —
 // the cron caller has no user session, and the data we surface is the
 // user's own. RLS is enforced at the application layer here: we filter
 // strictly by the business_members rows for *this* user_id and never
@@ -36,7 +36,7 @@ export async function buildDigestForUser(params: {
 }): Promise<UserDigest | null> {
   const { userId, email, unsubscribeToken, fromIso, toIso } = params;
 
-  // 1) Which restaurants does this user own?
+  // 1) Which businesses does this user own?
   const { data: memberships, error: memErr } = await supabaseAdmin
     .from("business_members")
     .select("business_id")
@@ -48,7 +48,7 @@ export async function buildDigestForUser(params: {
 
   const businessIds = memberships.map((m) => m.business_id as string);
 
-  // 2) Pull names for the restaurants.
+  // 2) Pull names for the businesses.
   const { data: businesses, error: bizErr } = await supabaseAdmin
     .from("businesses")
     .select("id, name")
@@ -56,7 +56,7 @@ export async function buildDigestForUser(params: {
 
   if (bizErr || !businesses) return null;
 
-  // 3) For each restaurant, compute the 5 stats. Run in parallel.
+  // 3) For each business, compute the 5 stats. Run in parallel.
   const stats = await Promise.all(
     businesses.map(async (b) => {
       const businessId = b.id as string;
@@ -119,7 +119,7 @@ export async function buildDigestForUser(params: {
     }),
   );
 
-  // Sort by scans desc so the busiest restaurant leads.
+  // Sort by scans desc so the busiest business leads.
   stats.sort((a, b) => b.scans - a.scans);
 
   return {

@@ -27,14 +27,14 @@ export default function SignupPage() {
         <CardHeader>
           <CardTitle className="font-serif text-xl">Create an account</CardTitle>
           <CardDescription>
-            Sign up to create your restaurant and start collecting reviews
+            Sign up to create your business and start collecting reviews
             and private feedback.
           </CardDescription>
         </CardHeader>
         <form action={action}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="restaurantName">Restaurant name</Label>
+              <Label htmlFor="restaurantName">Business name</Label>
               <Input
                 id="restaurantName"
                 name="restaurantName"

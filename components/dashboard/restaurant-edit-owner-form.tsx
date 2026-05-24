@@ -47,8 +47,8 @@ export function RestaurantEditOwnerForm({ defaults }: { defaults: Defaults }) {
       <CardHeader>
         <CardTitle className="font-serif text-xl">Edit details</CardTitle>
         <CardDescription>
-          Update your restaurant&apos;s display name, Google review link, and
-          operational details. The public link slug is fixed once a restaurant
+          Update your business&apos;s display name, Google review link, and
+          operational details. The public link slug is fixed once a business
           is created — printed QRs already point at it.
         </CardDescription>
       </CardHeader>
@@ -63,7 +63,7 @@ export function RestaurantEditOwnerForm({ defaults }: { defaults: Defaults }) {
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">Restaurant name</Label>
+            <Label htmlFor="name">Business name</Label>
             <Input
               id="name"
               name="name"
@@ -117,7 +117,7 @@ export function RestaurantEditOwnerForm({ defaults }: { defaults: Defaults }) {
               defaultValue={defaults.google_place_id ?? ""}
             />
             <p className="text-xs text-muted-foreground">
-              Optional. Used internally to identify your restaurant on Google
+              Optional. Used internally to identify your business on Google
               Maps. Find it via Google&apos;s Place ID Finder if your URL
               doesn&apos;t include one.
             </p>

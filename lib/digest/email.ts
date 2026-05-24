@@ -56,7 +56,7 @@ export function renderDigest(
   );
 
   const restaurantCount = digest.restaurants.length;
-  const restaurantWord = restaurantCount === 1 ? "restaurant" : "restaurants";
+  const restaurantWord = restaurantCount === 1 ? "business" : "businesses";
 
   const subject = `Your weekly summary (${dateRange})`;
 
@@ -104,7 +104,7 @@ export function renderDigest(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;">
                 <thead>
                   <tr>
-                    <th style="padding:8px;text-align:left;border-bottom:2px solid #0a0a0a;font-weight:600;">Restaurant</th>
+                    <th style="padding:8px;text-align:left;border-bottom:2px solid #0a0a0a;font-weight:600;">Business</th>
                     <th style="padding:8px;text-align:right;border-bottom:2px solid #0a0a0a;font-weight:600;">Scans</th>
                     <th style="padding:8px;text-align:right;border-bottom:2px solid #0a0a0a;font-weight:600;">Ratings</th>
                     <th style="padding:8px;text-align:right;border-bottom:2px solid #0a0a0a;font-weight:600;">Avg</th>
@@ -139,7 +139,7 @@ export function renderDigest(
     "",
     `${totalScans} ${totalScans === 1 ? "scan" : "scans"}, ${totalFeedback} private ${totalFeedback === 1 ? "submission" : "submissions"} across ${restaurantCount} ${restaurantWord}.`,
     "",
-    "Restaurant breakdown:",
+    "Business breakdown:",
     ...digest.restaurants.map(
       (r) =>
         `- ${r.businessName}: ${r.scans} scans, ${r.ratings} ratings, avg ${avgFormat(r.avgRating)}, ${r.googleClicks} Google clicks, ${r.feedbackCount} private`,

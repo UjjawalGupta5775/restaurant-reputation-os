@@ -29,9 +29,9 @@ export default async function SettingsBillingPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="font-serif text-xl">No restaurants yet</CardTitle>
+          <CardTitle className="font-serif text-xl">No businesses yet</CardTitle>
           <CardDescription>
-            Create a restaurant first — billing kicks in per restaurant.
+            Create a business first — billing kicks in per business.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -46,8 +46,8 @@ export default async function SettingsBillingPage() {
     );
   }
 
-  // Per-restaurant subscriptions: fetch each in parallel. Small fan-out is
-  // fine — owners typically have a handful of restaurants, and each query
+  // Per-business subscriptions: fetch each in parallel. Small fan-out is
+  // fine — owners typically have a handful of businesses, and each query
   // is a single-row PK lookup gated by RLS.
   const rows = await Promise.all(
     businesses.map(async (b) => {
@@ -64,8 +64,8 @@ export default async function SettingsBillingPage() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Each restaurant has its own subscription. Manage card, plan, or
-        cancel from the per-restaurant billing page.
+        Each business has its own subscription. Manage card, plan, or
+        cancel from the per-business billing page.
       </p>
 
       <div className="space-y-3">

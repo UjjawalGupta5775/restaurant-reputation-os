@@ -58,7 +58,7 @@ export default async function AccountSettingsPage() {
             Deactivate account
           </CardTitle>
           <CardDescription>
-            This signs you out and locks your account. Your restaurants and
+            This signs you out and locks your account. Your businesses and
             their data remain — contact support to reactivate or fully delete.
           </CardDescription>
         </CardHeader>

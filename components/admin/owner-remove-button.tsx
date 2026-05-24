@@ -27,7 +27,7 @@ export function OwnerRemoveButton({
       onSubmit={(e) => {
         if (
           !confirm(
-            `Remove ${email ?? "this owner"} from this restaurant? They lose dashboard access immediately.`,
+            `Remove ${email ?? "this owner"} from this business? They lose dashboard access immediately.`,
           )
         ) {
           e.preventDefault();

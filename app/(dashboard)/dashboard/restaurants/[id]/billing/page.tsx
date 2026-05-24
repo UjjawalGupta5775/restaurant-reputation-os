@@ -49,7 +49,7 @@ export default async function BillingPage({
 
   // Back link follows ?from= when it points to a same-site path. Lets
   // visitors who arrived from /dashboard/settings/billing land back on
-  // that list page instead of being dumped on the restaurant detail.
+  // that list page instead of being dumped on the business detail.
   const safeFrom =
     from && from.startsWith("/") && !from.startsWith("//") ? from : null;
   const backHref = safeFrom ?? `/dashboard/restaurants/${business.id}`;

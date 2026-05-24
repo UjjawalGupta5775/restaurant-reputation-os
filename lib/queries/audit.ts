@@ -94,7 +94,7 @@ export async function listRecentAudit(limit = 100): Promise<AuditEntry[]> {
   }));
 }
 
-// listAuditForBusiness — per-restaurant audit log for support workflows.
+// listAuditForBusiness — per-business audit log for support workflows.
 // Paginated SQL query (not in-memory) because a single business can
 // accumulate hundreds of entries over its life. Caller is expected to
 // have already gated via requireSuperAdmin.

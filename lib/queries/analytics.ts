@@ -213,7 +213,7 @@ export async function getFunnelTiming(
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Platform-wide variants for /admin. Same shape as the per-restaurant
+// Platform-wide variants for /admin. Same shape as the per-business
 // versions so the existing KpiStrip + DailyScansChart components can be
 // rendered unchanged. RLS gates by super-admin: a non-admin calling
 // these gets zeroes (they can't read other businesses' events anyway).

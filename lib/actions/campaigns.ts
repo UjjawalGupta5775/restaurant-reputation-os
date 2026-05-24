@@ -143,7 +143,7 @@ export async function createCampaign(
     // 42501 = insufficient privilege; row-level security blocked the insert
     // (caller doesn't own that business). Surface a generic message.
     if (error && error.code === "42501") {
-      return { error: "You don't have access to that restaurant." };
+      return { error: "You don't have access to that business." };
     }
 
     if (error) {

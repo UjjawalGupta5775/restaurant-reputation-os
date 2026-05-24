@@ -46,9 +46,9 @@ export function RestaurantEditForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-xl">Edit restaurant</CardTitle>
+        <CardTitle className="font-serif text-xl">Edit business</CardTitle>
         <CardDescription>
-          The public link slug is fixed once a restaurant is created — printed
+          The public link slug is fixed once a business is created — printed
           QRs already point at it.
         </CardDescription>
       </CardHeader>
@@ -63,7 +63,7 @@ export function RestaurantEditForm({
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">Restaurant name</Label>
+            <Label htmlFor="name">Business name</Label>
             <Input
               id="name"
               name="name"
