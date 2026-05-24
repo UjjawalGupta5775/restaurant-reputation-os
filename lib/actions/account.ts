@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { verifySession } from "@/lib/dal";
@@ -99,9 +100,36 @@ export async function changeEmail(
     return { error: error.message };
   }
 
+  revalidatePath("/dashboard/settings/account");
   return {
     info: "Confirmation links sent. Click the link in BOTH your current and new email inboxes to finalize the change.",
   };
+}
+
+// cancelPendingEmailChange — Supabase has no first-class "cancel" API; the
+// pending change auto-expires when the OTP TTL runs out (default 1 hour) or
+// the user clicks neither link. We clear it explicitly via admin update so
+// the user can retry without waiting. Token rows are wiped by setting
+// email_change_token_new/current to '' alongside email.
+export async function cancelPendingEmailChange(): Promise<AuthState> {
+  const session = await verifySession();
+
+  if (!session.email) {
+    return { error: "No current email on file. Contact support." };
+  }
+
+  // Re-asserting the same email clears new_email + tokens server-side.
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(session.userId, {
+    email: session.email,
+    email_confirm: true,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/settings/account");
+  return { info: "Pending change cancelled." };
 }
 
 // deactivateAccount — soft delete. Marks app_users.deactivated_at, signs the

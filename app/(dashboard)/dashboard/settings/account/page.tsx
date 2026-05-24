@@ -1,4 +1,4 @@
-import { verifySession } from "@/lib/dal";
+import { verifySession, getCurrentUser } from "@/lib/dal";
 import {
   Card,
   CardContent,
@@ -14,6 +14,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountSettingsPage() {
   const session = await verifySession();
+  const user = await getCurrentUser();
+
+  // Supabase populates new_email + email_change_sent_at on the auth user
+  // while a change is pending (between request and final confirmation).
+  // Surfacing them removes the "did the email actually send?" ambiguity.
+  const pendingEmail = user?.new_email ?? null;
+  const pendingSince = user?.email_change_sent_at ?? null;
 
   return (
     <div className="space-y-6">
@@ -25,7 +32,11 @@ export default async function AccountSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChangeEmailForm currentEmail={session.email} />
+          <ChangeEmailForm
+            currentEmail={session.email}
+            pendingEmail={pendingEmail}
+            pendingSince={pendingSince}
+          />
         </CardContent>
       </Card>
 
