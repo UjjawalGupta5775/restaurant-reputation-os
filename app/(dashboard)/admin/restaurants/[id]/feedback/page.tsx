@@ -56,7 +56,15 @@ export default async function AdminRestaurantFeedbackPage({
       </div>
 
       <header className="space-y-2">
-        <h1 className="font-serif text-3xl tracking-tight">Feedback</h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h1 className="font-serif text-3xl tracking-tight">Feedback</h1>
+          <Link
+            href={`/admin/restaurants/${business.id}/templates`}
+            className="rounded-sm text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+          >
+            Manage reply templates →
+          </Link>
+        </div>
         <p className="tabular-nums text-sm text-muted-foreground">
           {result.total === 0
             ? filtered

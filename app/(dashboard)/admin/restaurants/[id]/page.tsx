@@ -76,12 +76,6 @@ export default async function AdminRestaurantDetailPage({
               Review prompts
             </Link>
             <Link
-              href={`/admin/restaurants/${business.id}/templates`}
-              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
-            >
-              Templates
-            </Link>
-            <Link
               href={`/admin/restaurants/${business.id}/billing`}
               className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
             >
