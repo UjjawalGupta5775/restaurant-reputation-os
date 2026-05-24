@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { OnboardingForm } from "@/components/dashboard/onboarding-form";
 import { BillingBanner } from "@/components/dashboard/billing-banner";
+import { OwnerBillingAttentionSummary } from "@/components/dashboard/owner-billing-attention-summary";
 
 export default async function DashboardPage() {
   const session = await getSessionRole();
@@ -63,7 +64,15 @@ export default async function DashboardPage() {
   // Multi-restaurant owner: surface any operational billing problems at the
   // top so they aren't trapped behind clicking into each restaurant. Healthy
   // subscriptions render nothing. Single-restaurant owners are auto-redirected
-  // to their detail page above, so this stacked banner area is multi-only.
+  // to their detail page above, so this banner area is multi-only.
+  //
+  // Display strategy:
+  //   1 affected  → show the full BillingBanner with name header + CTA
+  //                 (drilling into the fix from here is one click).
+  //   2+ affected → show a single aggregate strip linking to
+  //                 /dashboard/billing, where each restaurant's status
+  //                 renders individually. Avoids the dashboard becoming
+  //                 a wall of stacked amber bars.
   const banners = await Promise.all(
     businesses.map(async (b) => {
       const sub = await getSubscriptionForBusiness(b.id);
@@ -75,21 +84,21 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      {activeBanners.length > 0 && (
-        <div className="space-y-3">
-          {activeBanners.map(({ business, banner }) => (
-            <div key={business.id} className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                {business.name}
-              </p>
-              <BillingBanner
-                banner={banner}
-                businessId={business.id}
-                returnPath="/dashboard"
-              />
-            </div>
-          ))}
+      {activeBanners.length === 1 && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            {activeBanners[0].business.name}
+          </p>
+          <BillingBanner
+            banner={activeBanners[0].banner}
+            businessId={activeBanners[0].business.id}
+            returnPath="/dashboard"
+          />
         </div>
+      )}
+
+      {activeBanners.length > 1 && (
+        <OwnerBillingAttentionSummary count={activeBanners.length} />
       )}
 
       <header className="space-y-2">

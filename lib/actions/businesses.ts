@@ -186,12 +186,14 @@ const updateSchema = businessSchema.extend({
   id: z.uuid("Invalid restaurant id."),
 });
 
-// Owner-scoped update is intentionally narrower than admin-scoped update.
-// Field whitelist is enforced HERE in the server action (RLS only gates the
-// row). Adding fields to this schema is the only correct way to expand
-// owner-write capability — never spread an unvalidated form body into the
-// UPDATE call below. Specifically: do NOT add slug, google_review_url, or
-// google_place_id here; those are admin-controlled.
+// Owner-scoped update is narrower than admin-scoped update. Field whitelist
+// is enforced HERE in the server action (RLS only gates which row). Adding
+// fields to this schema is the only correct way to expand owner-write
+// capability — never spread an unvalidated form body into the UPDATE call
+// below. slug is excluded (printed QRs depend on it being stable). Google
+// review URL and Place ID ARE owner-editable as of self-serve signup:
+// owners need to be able to wire up their own Google review CTA without
+// gating on admin support.
 const ownerUpdateSchema = z.object({
   id: z.uuid("Invalid restaurant id."),
   name: z
@@ -199,6 +201,21 @@ const ownerUpdateSchema = z.object({
     .trim()
     .min(1, "Name is required.")
     .max(120, "Name must be 120 characters or fewer."),
+  googleReviewUrl: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : v))
+    .refine(
+      (v) => v === undefined || /^https:\/\//.test(v),
+      "Must start with https://",
+    ),
+  googlePlaceId: z
+    .string()
+    .trim()
+    .max(255, "Place ID must be 255 characters or fewer.")
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : v)),
   phone: z
     .string()
     .trim()
@@ -288,6 +305,8 @@ export async function updateBusiness(
   const parsed = ownerUpdateSchema.safeParse({
     id: formData.get("id"),
     name: formData.get("name"),
+    googleReviewUrl: formData.get("googleReviewUrl"),
+    googlePlaceId: formData.get("googlePlaceId"),
     phone: formData.get("phone"),
     address: formData.get("address"),
     hours: formData.get("hours"),
@@ -296,12 +315,20 @@ export async function updateBusiness(
     return { fieldErrors: collectFieldErrors(parsed.error) };
   }
 
-  const { id, name, phone, address, hours } = parsed.data;
+  const { id, name, googleReviewUrl, googlePlaceId, phone, address, hours } =
+    parsed.data;
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("businesses")
-    .update({ name, phone, address, hours })
+    .update({
+      name,
+      google_review_url: googleReviewUrl ?? null,
+      google_place_id: googlePlaceId ?? null,
+      phone,
+      address,
+      hours,
+    })
     .eq("id", id)
     .select("id");
 
@@ -316,7 +343,17 @@ export async function updateBusiness(
     action: "business_updated",
     targetType: "business",
     targetId: id,
-    metadata: { scope: "owner", fields: ["name", "phone", "address", "hours"] },
+    metadata: {
+      scope: "owner",
+      fields: [
+        "name",
+        "google_review_url",
+        "google_place_id",
+        "phone",
+        "address",
+        "hours",
+      ],
+    },
   });
 
   revalidatePath(base);

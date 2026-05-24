@@ -6,6 +6,7 @@ import {
   listActiveChipsForCustomer,
 } from "@/lib/queries/review-chips";
 import { getOperationalStatusPublic } from "@/lib/queries/subscriptions";
+import { recordPausedView } from "@/lib/funnel/paused-view";
 import { CustomerFunnel } from "@/components/funnel/customer-funnel";
 import { PausedRestaurantNotice } from "@/components/funnel/paused-restaurant-notice";
 
@@ -31,6 +32,11 @@ export default async function PublicRestaurantPage({
   // active right now.
   const access = await getOperationalStatusPublic(business.id);
   if (!access.ok) {
+    // Fire-and-forget observability event so we can measure how often
+    // a real customer hits the pause wall. Awaiting would add latency
+    // to the customer's render for no benefit; failures land in Sentry
+    // via the helper.
+    void recordPausedView({ businessId: business.id, reason: access.reason });
     return (
       <main className="mx-auto flex min-h-svh max-w-3xl flex-col justify-center px-4 py-8">
         <PausedRestaurantNotice

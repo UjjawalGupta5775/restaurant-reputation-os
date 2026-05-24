@@ -23,15 +23,17 @@ type Defaults = {
   id: string;
   name: string;
   slug: string;
+  google_review_url: string | null;
+  google_place_id: string | null;
   phone: string | null;
   address: string | null;
   hours: string | null;
 };
 
-// Owner-scoped edit form. Deliberately narrower than the admin form:
-// slug, Google review URL, and Google Place ID are NOT editable here.
-// The server action's ownerUpdateSchema is the authoritative whitelist;
-// this form is just the UI for the same set of fields.
+// Owner-scoped edit form. The slug stays admin-only (printed QRs depend
+// on it). Google review URL and Place ID ARE owner-editable — they need
+// to be, since self-serve signups land with both unset. The server
+// action's ownerUpdateSchema is the authoritative field whitelist.
 export function RestaurantEditOwnerForm({ defaults }: { defaults: Defaults }) {
   const [state, action, pending] = useActionState<BusinessFormState, FormData>(
     updateBusiness,
@@ -45,9 +47,9 @@ export function RestaurantEditOwnerForm({ defaults }: { defaults: Defaults }) {
       <CardHeader>
         <CardTitle className="font-serif text-xl">Edit details</CardTitle>
         <CardDescription>
-          Update your restaurant&apos;s display name and the operational details
-          you want to keep on file. Public link and Google review settings are
-          managed by your admin.
+          Update your restaurant&apos;s display name, Google review link, and
+          operational details. The public link slug is fixed once a restaurant
+          is created — printed QRs already point at it.
         </CardDescription>
       </CardHeader>
       <form action={action}>
@@ -72,6 +74,54 @@ export function RestaurantEditOwnerForm({ defaults }: { defaults: Defaults }) {
               defaultValue={defaults.name}
             />
             {state?.fieldErrors?.name?.map((msg) => (
+              <p key={msg} role="alert" className="text-sm text-destructive">
+                {msg}
+              </p>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="googleReviewUrl">
+              Google review URL{" "}
+              <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="googleReviewUrl"
+              name="googleReviewUrl"
+              type="url"
+              autoComplete="off"
+              placeholder="https://g.page/r/.../review"
+              defaultValue={defaults.google_review_url ?? ""}
+            />
+            <p className="text-xs text-muted-foreground">
+              Find this in your Google Business Profile → &ldquo;Get more
+              reviews&rdquo; → copy the share link. Customers who tap
+              &ldquo;Leave a Google review&rdquo; will land here.
+            </p>
+            {state?.fieldErrors?.googleReviewUrl?.map((msg) => (
+              <p key={msg} role="alert" className="text-sm text-destructive">
+                {msg}
+              </p>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="googlePlaceId">
+              Google Place ID{" "}
+              <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="googlePlaceId"
+              name="googlePlaceId"
+              type="text"
+              autoComplete="off"
+              placeholder="ChIJ..."
+              defaultValue={defaults.google_place_id ?? ""}
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional. Used internally to identify your restaurant on Google
+              Maps. Find it via Google&apos;s Place ID Finder if your URL
+              doesn&apos;t include one.
+            </p>
+            {state?.fieldErrors?.googlePlaceId?.map((msg) => (
               <p key={msg} role="alert" className="text-sm text-destructive">
                 {msg}
               </p>

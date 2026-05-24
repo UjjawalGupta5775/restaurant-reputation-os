@@ -88,6 +88,12 @@ export default async function AdminRestaurantDetailPage({
               Edit
             </Link>
             <Link
+              href={`/admin/restaurants/${business.id}/audit`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Audit
+            </Link>
+            <Link
               href={`/admin/restaurants/${business.id}/feedback`}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >

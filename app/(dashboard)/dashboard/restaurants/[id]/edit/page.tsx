@@ -44,6 +44,8 @@ export default async function OwnerRestaurantEditPage({
           id: business.id,
           name: business.name,
           slug: business.slug,
+          google_review_url: business.google_review_url,
+          google_place_id: business.google_place_id,
           phone: business.phone,
           address: business.address,
           hours: business.hours,

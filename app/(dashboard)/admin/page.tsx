@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { listAllBusinesses } from "@/lib/queries/businesses";
+import {
+  listAllBusinessesAdmin,
+  type AdminBusinessStatusFilter,
+} from "@/lib/queries/businesses";
 import {
   getPlatformDailyScans,
   getPlatformKpis,
@@ -16,21 +19,68 @@ import {
 import { KpiStrip } from "@/components/dashboard/kpi-strip";
 import { DailyScansChart } from "@/components/dashboard/daily-scans-chart";
 import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
+import { AdminRestaurantListControls } from "@/components/admin/restaurant-list-controls";
+import { AdminRestaurantListPagination } from "@/components/admin/restaurant-list-pagination";
+import { SubscriptionStatusBadge } from "@/components/admin/subscription-status-badge";
+
+const VALID_STATUSES: ReadonlyArray<AdminBusinessStatusFilter> = [
+  "all",
+  "trialing",
+  "active",
+  "past_due",
+  "canceled",
+  "no_subscription",
+];
+
+function parseStatusFilter(raw: string | undefined): AdminBusinessStatusFilter {
+  if (!raw) return "all";
+  return (VALID_STATUSES as readonly string[]).includes(raw)
+    ? (raw as AdminBusinessStatusFilter)
+    : "all";
+}
+
+function parsePage(raw: string | undefined): number {
+  if (!raw) return 1;
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(n, 1000);
+}
 
 export default async function AdminHomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{
+    period?: string;
+    q?: string;
+    status?: string;
+    page?: string;
+  }>;
 }) {
-  const { period: periodParam } = await searchParams;
+  const {
+    period: periodParam,
+    q: searchParam,
+    status: statusParam,
+    page: pageParam,
+  } = await searchParams;
+
   const period = parsePeriod(periodParam);
   const label = periodLabel(period);
+  const search = (searchParam ?? "").slice(0, 120);
+  const status = parseStatusFilter(statusParam);
+  const page = parsePage(pageParam);
 
-  const [businesses, kpis, daily] = await Promise.all([
-    listAllBusinesses(),
+  const [businessesPage, kpis, daily] = await Promise.all([
+    listAllBusinessesAdmin({ search, status, page }),
     getPlatformKpis(period),
     getPlatformDailyScans(period),
   ]);
+
+  // Carried into pagination links so filter context survives next/prev.
+  const baseSearchParams = {
+    period: periodParam,
+    q: search || undefined,
+    status: status === "all" ? undefined : status,
+  };
 
   return (
     <div className="space-y-10">
@@ -43,12 +93,10 @@ export default async function AdminHomePage({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/admin/feedback"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Feedback
-          </Link>
+          {/* /admin/feedback intentionally NOT linked here. The cross-tenant
+              firehose is noise for daily admin work; per-restaurant feedback
+              lives under /admin/restaurants/[id]/feedback. The route stays
+              reachable for support escalations that include a direct URL. */}
           <Link
             href="/admin/audit"
             className={buttonVariants({ variant: "outline" })}
@@ -72,47 +120,76 @@ export default async function AdminHomePage({
 
       <section className="space-y-4">
         <h2 className="font-serif text-xl tracking-tight">Restaurants</h2>
-        {businesses.length === 0 ? (
+
+        <AdminRestaurantListControls
+          initialSearch={search}
+          currentStatus={status}
+        />
+
+        {businessesPage.rows.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center">
               <p className="font-serif italic text-base text-muted-foreground max-w-sm mx-auto">
-                No restaurants yet. Add the first one to start onboarding owners.
+                {search || status !== "all"
+                  ? "No restaurants match the current filters."
+                  : "No restaurants yet. Add the first one to start onboarding owners."}
               </p>
-              <div className="mt-6">
-                <Link
-                  href="/admin/restaurants/new"
-                  className={buttonVariants()}
-                >
-                  Add first restaurant
-                </Link>
-              </div>
+              {!search && status === "all" && (
+                <div className="mt-6">
+                  <Link
+                    href="/admin/restaurants/new"
+                    className={buttonVariants()}
+                  >
+                    Add first restaurant
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {businesses.map((b) => (
-              <Link
-                key={b.id}
-                href={`/admin/restaurants/${b.id}`}
-                className="block"
-              >
-                <Card className="h-full transition-colors hover:bg-accent/40">
-                  <CardHeader>
-                    <CardTitle className="truncate font-serif text-xl">
-                      {b.name}
-                    </CardTitle>
-                    <CardDescription className="font-mono text-xs">
-                      /r/{b.slug}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground">
-                    <span className="tabular-nums">{b.campaignCount}</span>{" "}
-                    {b.campaignCount === 1 ? "campaign" : "campaigns"}
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {businessesPage.rows.map((b) => (
+                <Link
+                  key={b.id}
+                  href={`/admin/restaurants/${b.id}`}
+                  className="block"
+                >
+                  <Card className="h-full transition-colors hover:bg-accent/40">
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="truncate font-serif text-xl">
+                            {b.name}
+                          </CardTitle>
+                          <CardDescription className="font-mono text-xs">
+                            /r/{b.slug}
+                          </CardDescription>
+                        </div>
+                        <SubscriptionStatusBadge
+                          status={b.subscriptionStatus}
+                          reason={b.accessReason}
+                          className="shrink-0"
+                        />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="text-sm text-muted-foreground">
+                      <span className="tabular-nums">{b.campaignCount}</span>{" "}
+                      {b.campaignCount === 1 ? "campaign" : "campaigns"}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+
+            <AdminRestaurantListPagination
+              page={businessesPage.page}
+              totalPages={businessesPage.totalPages}
+              total={businessesPage.total}
+              pageSize={businessesPage.pageSize}
+              baseSearchParams={baseSearchParams}
+            />
+          </>
         )}
       </section>
     </div>
