@@ -1,8 +1,23 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, type NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
+// Baseline security headers applied to every proxied response. CSP is
+// intentionally NOT here — adding one safely requires inventorying every
+// script source (Sentry, fonts, embeds), so it's a separate follow-up.
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()",
+  );
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+  const response = await updateSession(request);
+  return applySecurityHeaders(response);
 }
 
 export const config = {
