@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireBusinessAccess } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
+import { checkOperationalSubscription } from "@/lib/billing/guard";
 
 export type TemplateActionState =
   | { ok: true; message?: string }
@@ -65,7 +66,12 @@ export async function createResponseTemplate(
     return { ok: false, error: "Check the highlighted fields.", fieldErrors: collectFieldErrors(parsed.error) };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase.from("response_templates").insert({
@@ -98,7 +104,12 @@ export async function updateResponseTemplate(
     return { ok: false, error: "Check the highlighted fields.", fieldErrors: collectFieldErrors(parsed.error) };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -132,7 +143,12 @@ export async function deleteResponseTemplate(
     return { ok: false, error: "Invalid request." };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase

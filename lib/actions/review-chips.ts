@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireBusinessAccess } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
+import { checkOperationalSubscription } from "@/lib/billing/guard";
 
 export type ChipActionState =
   | { ok: true; message?: string }
@@ -118,7 +119,12 @@ export async function createChip(
     };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   // New chips land at the bottom of the active list. We compute next
@@ -170,7 +176,12 @@ export async function updateChip(
     };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -206,7 +217,12 @@ export async function toggleChip(
     return { ok: false, error: "Invalid request." };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -235,7 +251,12 @@ export async function deleteChip(
     return { ok: false, error: "Invalid request." };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -283,7 +304,12 @@ export async function reorderChips(
     return { ok: true };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   for (let i = 0; i < ids.length; i++) {
@@ -318,7 +344,12 @@ export async function updateChipSettings(
     };
   }
 
-  await requireBusinessAccess(parsed.data.businessId);
+  const role = await requireBusinessAccess(parsed.data.businessId);
+  const billingError = await checkOperationalSubscription(
+    parsed.data.businessId,
+    role,
+  );
+  if (billingError) return { ok: false, error: billingError };
 
   const supabase = await createClient();
   const { error } = await supabase

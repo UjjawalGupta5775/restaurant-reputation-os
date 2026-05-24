@@ -4,7 +4,12 @@ import * as Sentry from "@sentry/nextjs";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { requireBusinessAccess } from "@/lib/dal";
-import type { SubscriptionRecord, SubscriptionStatus } from "@/lib/billing/state";
+import {
+  evaluateAccess,
+  type AccessReason,
+  type SubscriptionRecord,
+  type SubscriptionStatus,
+} from "@/lib/billing/state";
 
 // Maps the DB row shape (snake_case, raw status string) into the
 // canonical SubscriptionRecord used by the state machine. Centralizes
@@ -94,4 +99,43 @@ export async function getSubscriptionByProviderSubId(
   }
   if (!data) return null;
   return rowToRecord(data as Record<string, unknown>);
+}
+
+// getOperationalStatusPublic — used by the unauthenticated customer
+// funnel at /r/[slug] to decide whether to render the funnel or a
+// "reviews paused" screen. Routes through the service-role client
+// because anon users have NO read access on subscriptions; only a
+// boolean + a reason code crosses back out, never the row itself.
+//
+// Returns ok=false for businesses with no subscription row at all
+// (matching evaluateAccess(null)). In practice that only happens for
+// brand-new self-serve businesses before any LS event has fired — those
+// businesses also can't create campaigns, so the customer never has a
+// QR to scan for them anyway. Grandfathered businesses (pre-0013) have
+// the long admin_override row and return ok=true.
+export async function getOperationalStatusPublic(
+  businessId: string,
+): Promise<{ ok: boolean; reason: AccessReason }> {
+  const { data, error } = await supabaseAdmin
+    .from("subscriptions")
+    .select(
+      "id, business_id, provider, provider_customer_id, provider_subscription_id, status, trial_ends_at, current_period_ends_at, grace_until, admin_override_until, cancel_at, canceled_at, metadata, created_at, updated_at",
+    )
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  if (error) {
+    Sentry.captureException(error, {
+      tags: { area: "subscriptions", op: "getOperationalStatusPublic" },
+    });
+    // Fail OPEN on read errors. A transient Supabase blip should not
+    // hide a paying restaurant's funnel from a customer at the table.
+    // The owner-side gates remain strict; this surface biases toward
+    // not punishing customers for our infrastructure problems.
+    return { ok: true, reason: "active" };
+  }
+
+  const record = data ? rowToRecord(data as Record<string, unknown>) : null;
+  const verdict = evaluateAccess(record);
+  return { ok: verdict.ok, reason: verdict.reason };
 }
