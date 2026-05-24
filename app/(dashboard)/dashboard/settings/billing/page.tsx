@@ -95,7 +95,7 @@ export default async function SettingsBillingPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/dashboard/restaurants/${business.id}/billing`}
+                  href={`/dashboard/restaurants/${business.id}/billing?from=/dashboard/settings/billing`}
                   className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Manage

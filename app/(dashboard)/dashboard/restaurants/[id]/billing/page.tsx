@@ -30,10 +30,13 @@ const toneBadge: Record<
 
 export default async function BillingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
+  const { from } = await searchParams;
 
   await requireBusinessAccess(id);
   const business = await getBusinessByIdForOwner(id);
@@ -44,6 +47,16 @@ export default async function BillingPage({
   const banner = deriveBanner(subscription);
   const returnPath = `/dashboard/restaurants/${business.id}/billing`;
 
+  // Back link follows ?from= when it points to a same-site path. Lets
+  // visitors who arrived from /dashboard/settings/billing land back on
+  // that list page instead of being dumped on the restaurant detail.
+  const safeFrom =
+    from && from.startsWith("/") && !from.startsWith("//") ? from : null;
+  const backHref = safeFrom ?? `/dashboard/restaurants/${business.id}`;
+  const backLabel = safeFrom === "/dashboard/settings/billing"
+    ? "Back to Billing settings"
+    : `Back to ${business.name}`;
+
   const ctaAction =
     summary.primaryCta.kind === "portal"
       ? openCustomerPortal.bind(null, business.id, returnPath)
@@ -53,10 +66,10 @@ export default async function BillingPage({
     <div className="space-y-8">
       <div className="text-sm">
         <Link
-          href={`/dashboard/restaurants/${business.id}`}
+          href={backHref}
           className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
-          ← Back to {business.name}
+          ← {backLabel}
         </Link>
       </div>
 

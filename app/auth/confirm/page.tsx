@@ -59,14 +59,17 @@ export default async function ConfirmPage({
         ? submittedNext
         : submittedType === "signup" || submittedType === "email"
           ? "/dashboard"
-          : submittedType === "recovery"
-            ? "/auth/reset-password"
-            : "/auth/invite",
+          : submittedType === "email_change"
+            ? "/dashboard/settings/account"
+            : submittedType === "recovery"
+              ? "/auth/reset-password"
+              : "/auth/invite",
     );
   }
 
   const isRecovery = type === "recovery";
   const isSignup = type === "signup" || type === "email";
+  const isEmailChange = type === "email_change";
   const copy = isRecovery
     ? {
         title: "Reset your password",
@@ -81,12 +84,19 @@ export default async function ConfirmPage({
           body: "One tap and you're in — we'll take you to your dashboard next.",
           button: "Confirm email",
         }
-      : {
-          title: "Welcome aboard",
-          description: "Click below to confirm your email and set up your account.",
-          body: "Your invite is ready. Continue to choose a password.",
-          button: "Continue",
-        };
+      : isEmailChange
+        ? {
+            title: "Confirm email change",
+            description: "Click below to confirm this email change. Supabase requires confirmation from both your old and new addresses before the change takes effect.",
+            body: "One side done — make sure you've also clicked the link in your other inbox.",
+            button: "Confirm change",
+          }
+        : {
+            title: "Welcome aboard",
+            description: "Click below to confirm your email and set up your account.",
+            body: "Your invite is ready. Continue to choose a password.",
+            button: "Continue",
+          };
 
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
@@ -98,7 +108,19 @@ export default async function ConfirmPage({
         <form action={confirm}>
           <input type="hidden" name="token_hash" value={token_hash} />
           <input type="hidden" name="type" value={type} />
-          <input type="hidden" name="next" value={next ?? "/auth/invite"} />
+          <input type="hidden"
+            name="next"
+            value={
+              next ??
+              (type === "email_change"
+                ? "/dashboard/settings/account"
+                : type === "signup" || type === "email"
+                  ? "/dashboard"
+                  : type === "recovery"
+                    ? "/auth/reset-password"
+                    : "/auth/invite")
+            }
+          />
           <CardContent>
             <p className="font-serif italic text-sm text-muted-foreground">
               {copy.body}
