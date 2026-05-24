@@ -20,6 +20,17 @@ function collectFieldErrors(error: z.ZodError): Record<string, string[]> {
   return fieldErrors;
 }
 
+// Mutations come from either /dashboard or /admin; both routes render
+// the same manager from the same query, so both caches need to bust
+// after every write. Otherwise the cross-role view is stale until next
+// hard navigation.
+function revalidateTemplatePaths(businessId: string) {
+  revalidatePath(`/dashboard/restaurants/${businessId}/templates`);
+  revalidatePath(`/dashboard/restaurants/${businessId}/feedback`);
+  revalidatePath(`/admin/restaurants/${businessId}/templates`);
+  revalidatePath(`/admin/restaurants/${businessId}/feedback`);
+}
+
 const createSchema = z.object({
   businessId: z.uuid(),
   label: z.string().trim().min(1, "Label is required.").max(80),
@@ -68,8 +79,7 @@ export async function createResponseTemplate(
     return { ok: false, error: "Could not save the template." };
   }
 
-  revalidatePath(`/dashboard/restaurants/${parsed.data.businessId}/templates`);
-  revalidatePath(`/dashboard/restaurants/${parsed.data.businessId}/feedback`);
+  revalidateTemplatePaths(parsed.data.businessId);
   return { ok: true, message: "Template added." };
 }
 
@@ -106,8 +116,7 @@ export async function updateResponseTemplate(
     return { ok: false, error: "Could not update the template." };
   }
 
-  revalidatePath(`/dashboard/restaurants/${parsed.data.businessId}/templates`);
-  revalidatePath(`/dashboard/restaurants/${parsed.data.businessId}/feedback`);
+  revalidateTemplatePaths(parsed.data.businessId);
   return { ok: true, message: "Template updated." };
 }
 
@@ -136,7 +145,6 @@ export async function deleteResponseTemplate(
     return { ok: false, error: "Could not delete the template." };
   }
 
-  revalidatePath(`/dashboard/restaurants/${parsed.data.businessId}/templates`);
-  revalidatePath(`/dashboard/restaurants/${parsed.data.businessId}/feedback`);
+  revalidateTemplatePaths(parsed.data.businessId);
   return { ok: true, message: "Template deleted." };
 }

@@ -62,12 +62,30 @@ export default async function AdminRestaurantDetailPage({
               {business.name}
             </h1>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
             <Link
               href={`/admin/restaurants/${business.id}/owners`}
               className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
             >
               Owners
+            </Link>
+            <Link
+              href={`/admin/restaurants/${business.id}/review-prompts`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Review prompts
+            </Link>
+            <Link
+              href={`/admin/restaurants/${business.id}/templates`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Templates
+            </Link>
+            <Link
+              href={`/admin/restaurants/${business.id}/billing`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Billing
             </Link>
             <Link
               href={`/admin/restaurants/${business.id}/edit`}

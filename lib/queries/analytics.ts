@@ -211,3 +211,121 @@ export async function getFunnelTiming(
     completeSampleCount: completeMs.length,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Platform-wide variants for /admin. Same shape as the per-restaurant
+// versions so the existing KpiStrip + DailyScansChart components can be
+// rendered unchanged. RLS gates by super-admin: a non-admin calling
+// these gets zeroes (they can't read other businesses' events anyway).
+// ─────────────────────────────────────────────────────────────────────
+
+export async function getPlatformKpis(
+  period: Period = "30d",
+): Promise<RestaurantKpis> {
+  const supabase = await createClient();
+  const { fromIso, toIso } = periodRange(period);
+
+  const eventCount = (eventType: string, windowed: boolean) => {
+    let q = supabase
+      .from("analytics_events")
+      .select("id", { count: "exact", head: true })
+      .eq("event_type", eventType);
+    if (windowed) q = q.gte("created_at", fromIso).lt("created_at", toIso);
+    return q;
+  };
+
+  const feedbackCount = (windowed: boolean) => {
+    let q = supabase
+      .from("feedback_submissions")
+      .select("id", { count: "exact", head: true });
+    if (windowed) q = q.gte("created_at", fromIso).lt("created_at", toIso);
+    return q;
+  };
+
+  const [
+    scansWin,
+    ratingsWin,
+    googleClicksWin,
+    feedbackWin,
+    scansAll,
+    ratingsAll,
+    feedbackAll,
+    avgRows,
+  ] = await Promise.all([
+    eventCount("scan_opened", true),
+    eventCount("stars_selected", true),
+    eventCount("google_redirect_clicked", true),
+    feedbackCount(true),
+    eventCount("scan_opened", false),
+    eventCount("stars_selected", false),
+    feedbackCount(false),
+    supabase
+      .from("analytics_events")
+      .select("metadata_json")
+      .eq("event_type", "stars_selected")
+      .gte("created_at", fromIso)
+      .lt("created_at", toIso)
+      .limit(AVG_RATING_SAMPLE_CAP),
+  ]);
+
+  let avgRating: number | null = null;
+  if (!avgRows.error && avgRows.data && avgRows.data.length > 0) {
+    const ratings: number[] = [];
+    for (const row of avgRows.data) {
+      const meta = row.metadata_json as { rating?: unknown } | null;
+      const r = meta?.rating;
+      if (typeof r === "number" && r >= 1 && r <= 5) ratings.push(r);
+    }
+    if (ratings.length > 0) {
+      avgRating = ratings.reduce((sum, n) => sum + n, 0) / ratings.length;
+    }
+  }
+
+  return {
+    windowScans: scansWin.count ?? 0,
+    windowRatings: ratingsWin.count ?? 0,
+    windowAvgRating: avgRating,
+    windowGoogleClicks: googleClicksWin.count ?? 0,
+    windowFeedback: feedbackWin.count ?? 0,
+    allTimeScans: scansAll.count ?? 0,
+    allTimeRatings: ratingsAll.count ?? 0,
+    allTimeFeedback: feedbackAll.count ?? 0,
+  };
+}
+
+export async function getPlatformDailyScans(
+  period: Period = "30d",
+): Promise<DailyScan[]> {
+  const supabase = await createClient();
+  const { fromIso, toIso, bucketCount } = periodRange(period);
+
+  const { data, error } = await supabase
+    .from("analytics_events")
+    .select("created_at")
+    .eq("event_type", "scan_opened")
+    .gte("created_at", fromIso)
+    .lt("created_at", toIso)
+    .limit(50000);
+
+  if (error) throw error;
+
+  const buckets = new Map<string, number>();
+  const fromDate = new Date(fromIso);
+  for (let i = 0; i < bucketCount; i++) {
+    const d = new Date(fromDate);
+    d.setUTCDate(d.getUTCDate() + i);
+    buckets.set(d.toISOString().slice(0, 10), 0);
+  }
+
+  for (const row of data ?? []) {
+    const key = (row.created_at as string).slice(0, 10);
+    if (buckets.has(key)) {
+      buckets.set(key, (buckets.get(key) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(buckets.entries()).map(([date, scans]) => ({
+    date,
+    scans,
+  }));
+}

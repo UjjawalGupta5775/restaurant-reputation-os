@@ -20,6 +20,15 @@ function collectFieldErrors(error: z.ZodError): Record<string, string[]> {
   return fieldErrors;
 }
 
+// Super-admins manage chips from /admin/restaurants/[id]/review-prompts;
+// owners from /dashboard/restaurants/[id]/review-prompts. Both paths
+// render the same manager, so every mutation has to bust both caches
+// or the cross-role view stays stale until next navigation.
+function revalidateChipPaths(businessId: string) {
+  revalidatePath(`/dashboard/restaurants/${businessId}/review-prompts`);
+  revalidatePath(`/admin/restaurants/${businessId}/review-prompts`);
+}
+
 // Soft validation: warn (not block) when the label looks subjective or
 // coercive. The hard product rule against rating-neutral chips lives in
 // PROJECT_CONTEXT.md; we still let the owner save what they want — this
@@ -136,9 +145,7 @@ export async function createChip(
     return { ok: false, error: "Could not save the chip." };
   }
 
-  revalidatePath(
-    `/dashboard/restaurants/${parsed.data.businessId}/review-prompts`,
-  );
+  revalidateChipPaths(parsed.data.businessId);
   return {
     ok: true,
     message: softWarn(parsed.data.label) ?? "Chip added.",
@@ -179,9 +186,7 @@ export async function updateChip(
     return { ok: false, error: "Could not update the chip." };
   }
 
-  revalidatePath(
-    `/dashboard/restaurants/${parsed.data.businessId}/review-prompts`,
-  );
+  revalidateChipPaths(parsed.data.businessId);
   return { ok: true, message: softWarn(parsed.data.label) ?? "Chip updated." };
 }
 
@@ -214,9 +219,7 @@ export async function toggleChip(
     return { ok: false, error: "Could not update the chip." };
   }
 
-  revalidatePath(
-    `/dashboard/restaurants/${parsed.data.businessId}/review-prompts`,
-  );
+  revalidateChipPaths(parsed.data.businessId);
   return { ok: true };
 }
 
@@ -245,9 +248,7 @@ export async function deleteChip(
     return { ok: false, error: "Could not delete the chip." };
   }
 
-  revalidatePath(
-    `/dashboard/restaurants/${parsed.data.businessId}/review-prompts`,
-  );
+  revalidateChipPaths(parsed.data.businessId);
   return { ok: true, message: "Chip deleted." };
 }
 
@@ -296,9 +297,7 @@ export async function reorderChips(
     }
   }
 
-  revalidatePath(
-    `/dashboard/restaurants/${parsed.data.businessId}/review-prompts`,
-  );
+  revalidateChipPaths(parsed.data.businessId);
   return { ok: true, message: "Order saved." };
 }
 
@@ -334,8 +333,6 @@ export async function updateChipSettings(
     return { ok: false, error: "Could not save display settings." };
   }
 
-  revalidatePath(
-    `/dashboard/restaurants/${parsed.data.businessId}/review-prompts`,
-  );
+  revalidateChipPaths(parsed.data.businessId);
   return { ok: true, message: "Display settings saved." };
 }
