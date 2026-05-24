@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listBusinessesForOwner } from "@/lib/queries/businesses";
+import { listAllBusinesses } from "@/lib/queries/businesses";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 
 export default async function AdminHomePage() {
-  const businesses = await listBusinessesForOwner();
+  const businesses = await listAllBusinesses();
 
   return (
     <div className="space-y-10">

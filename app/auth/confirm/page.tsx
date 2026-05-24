@@ -57,11 +57,16 @@ export default async function ConfirmPage({
     redirect(
       typeof submittedNext === "string" && submittedNext.startsWith("/")
         ? submittedNext
-        : "/auth/invite",
+        : submittedType === "signup" || submittedType === "email"
+          ? "/dashboard"
+          : submittedType === "recovery"
+            ? "/auth/reset-password"
+            : "/auth/invite",
     );
   }
 
   const isRecovery = type === "recovery";
+  const isSignup = type === "signup" || type === "email";
   const copy = isRecovery
     ? {
         title: "Reset your password",
@@ -69,12 +74,19 @@ export default async function ConfirmPage({
         body: "Your reset link is ready. Continue to set a new password.",
         button: "Continue to reset",
       }
-    : {
-        title: "Welcome aboard",
-        description: "Click below to confirm your email and set up your account.",
-        body: "Your invite is ready. Continue to choose a password.",
-        button: "Continue",
-      };
+    : isSignup
+      ? {
+          title: "Confirm your email",
+          description: "Click below to verify your email and finish setting up your account.",
+          body: "One tap and you're in — we'll take you to your dashboard next.",
+          button: "Confirm email",
+        }
+      : {
+          title: "Welcome aboard",
+          description: "Click below to confirm your email and set up your account.",
+          body: "Your invite is ready. Continue to choose a password.",
+          button: "Continue",
+        };
 
   return (
     <main className="flex min-h-svh items-center justify-center p-6">

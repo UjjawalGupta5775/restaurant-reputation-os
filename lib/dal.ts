@@ -46,7 +46,7 @@ export const getSessionRole = cache(async (): Promise<SessionRole> => {
   const [{ data: appUser }, { data: memberships }] = await Promise.all([
     supabase
       .from("app_users")
-      .select("is_super_admin")
+      .select("is_super_admin, deactivated_at")
       .eq("user_id", session.userId)
       .maybeSingle(),
     supabase
@@ -54,6 +54,17 @@ export const getSessionRole = cache(async (): Promise<SessionRole> => {
       .select("business_id")
       .eq("user_id", session.userId),
   ]);
+
+  // Bounce deactivated users immediately. Cookies can't be cleared from a
+  // Server Component (Next.js disallows cookie writes outside actions and
+  // route handlers), so we redirect through /auth/sign-out — a route
+  // handler that actually clears the session before bouncing to the
+  // login screen with the ?deactivated=1 notice. This closes the tab-
+  // race window where a user deactivates in one tab and keeps using
+  // another.
+  if (appUser?.deactivated_at) {
+    redirect("/auth/sign-out?reason=deactivated");
+  }
 
   return {
     userId: session.userId,

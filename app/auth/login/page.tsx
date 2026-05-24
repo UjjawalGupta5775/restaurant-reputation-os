@@ -35,6 +35,19 @@ function UrlError() {
   );
 }
 
+function DeactivatedNotice() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("deactivated") !== "1") return null;
+  return (
+    <p
+      role="status"
+      className="rounded-md border border-l-2 border-l-amber-500 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+    >
+      Your account has been deactivated. Contact support if this is a mistake.
+    </p>
+  );
+}
+
 export default function LoginPage() {
   const [state, action, pending] = useActionState<AuthState, FormData>(
     signIn,
@@ -52,6 +65,9 @@ export default function LoginPage() {
         </CardHeader>
         <form action={action}>
           <CardContent className="space-y-4">
+            <Suspense fallback={null}>
+              <DeactivatedNotice />
+            </Suspense>
             <Suspense fallback={null}>
               <UrlError />
             </Suspense>

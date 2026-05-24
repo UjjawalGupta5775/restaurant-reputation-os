@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { verifySession } from "@/lib/dal";
 
 export type BusinessSummary = {
   id: string;
@@ -9,7 +10,48 @@ export type BusinessSummary = {
   campaignCount: number;
 };
 
+// listBusinessesForOwner — returns ONLY the businesses the current user
+// is a member of. Defense-in-depth: RLS already filters by membership +
+// super-admin, but a super-admin signed in to /dashboard would otherwise
+// see every business on the platform. We want the owner-facing list to
+// stay scoped even when an admin happens to be looking at it. Admins
+// reach the full list via /admin (listAllBusinesses).
 export async function listBusinessesForOwner(): Promise<BusinessSummary[]> {
+  const session = await verifySession();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(
+      "id, name, slug, created_at, campaigns(count), business_members!inner(user_id)",
+    )
+    .eq("business_members.user_id", session.userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const campaignsField = row.campaigns as
+      | Array<{ count: number }>
+      | { count: number }
+      | null;
+    const campaignCount = Array.isArray(campaignsField)
+      ? (campaignsField[0]?.count ?? 0)
+      : (campaignsField?.count ?? 0);
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      slug: row.slug as string,
+      created_at: row.created_at as string,
+      campaignCount,
+    };
+  });
+}
+
+// listAllBusinesses — admin-only. Returns every business on the platform.
+// RLS still gates this (super-admins pass has_business_access), so a
+// non-admin calling it gets an empty list. The caller is expected to
+// have already gated via requireSuperAdmin.
+export async function listAllBusinesses(): Promise<BusinessSummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("businesses")

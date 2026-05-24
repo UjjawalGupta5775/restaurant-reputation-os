@@ -84,6 +84,27 @@ export async function signIn(
     return { error: error.message };
   }
 
+  // Deactivation gate. signInWithPassword only checks auth.users — a
+  // deactivated owner still has a valid auth.users row, so we have to
+  // re-check public.app_users.deactivated_at after the session lands.
+  // Doing this here (in a server action) means signOut() actually clears
+  // the cookies; the equivalent check in the DAL runs from a Server
+  // Component and silently no-ops on the cookie write, producing a
+  // login → /dashboard → /auth/login redirect loop.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const newUserId = claimsData?.claims?.sub as string | undefined;
+  if (newUserId) {
+    const { data: appUser } = await supabase
+      .from("app_users")
+      .select("deactivated_at")
+      .eq("user_id", newUserId)
+      .maybeSingle();
+    if (appUser?.deactivated_at) {
+      await supabase.auth.signOut();
+      redirect("/auth/login?deactivated=1");
+    }
+  }
+
   redirect(await landingPathForCurrentUser());
 }
 
@@ -109,6 +130,14 @@ export async function signUp(
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
+    options: {
+      // If "Confirm email" is enabled in Supabase Auth settings, the
+      // confirmation link in the email will land here and POST through
+      // /auth/confirm (the interstitial that survives email scanners).
+      // If confirm is disabled, options.emailRedirectTo is ignored and
+      // the user is signed in immediately below.
+      emailRedirectTo: `${await origin()}/auth/confirm?type=signup&next=/dashboard`,
+    },
   });
   if (signUpError) {
     return { error: signUpError.message };

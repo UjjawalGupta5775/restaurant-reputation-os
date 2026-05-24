@@ -4,9 +4,11 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { verifySession, requireSuperAdmin } from "@/lib/dal";
+import { verifySession, requireSuperAdmin, getSessionRole } from "@/lib/dal";
 import { slugify } from "@/lib/slug";
 import { recordAudit } from "@/lib/audit";
+import { getSubscriptionForBusiness } from "@/lib/queries/subscriptions";
+import { hasOperationalAccess } from "@/lib/billing/state";
 
 const scopeSchema = z.enum(["admin", "owner"]).default("owner");
 
@@ -66,12 +68,16 @@ export async function createCampaign(
 ): Promise<CampaignFormState> {
   const scope = scopeSchema.parse(formData.get("scope") ?? undefined);
   let actorUserId: string;
+  let actorIsSuperAdmin = false;
   if (scope === "admin") {
     const session = await requireSuperAdmin();
     actorUserId = session.userId;
+    actorIsSuperAdmin = true;
   } else {
     const session = await verifySession();
     actorUserId = session.userId;
+    const role = await getSessionRole();
+    actorIsSuperAdmin = role.isSuperAdmin;
   }
   const base = "/" + (scope === "admin" ? "admin" : "dashboard");
 
@@ -87,6 +93,20 @@ export async function createCampaign(
   }
 
   const { businessId, name, sourceType, tableCode, staffCode } = parsed.data;
+
+  // Subscription gate. Super-admins bypass so support can spin up demo
+  // campaigns for an owner whose plan lapsed. Owners need active/trialing/
+  // grace coverage per evaluateAccess.
+  if (!actorIsSuperAdmin) {
+    const sub = await getSubscriptionForBusiness(businessId);
+    if (!hasOperationalAccess(sub)) {
+      return {
+        error:
+          "Your subscription isn't active. Open Billing to start or restore a plan before creating a campaign.",
+      };
+    }
+  }
+
   const baseSlug = slugify(name) || "campaign";
   const supabase = await createClient();
 

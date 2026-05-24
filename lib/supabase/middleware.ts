@@ -41,17 +41,22 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Already-signed-in users hitting /auth/login (or any /auth/* other than
-  // /auth/callback, /auth/invite, and /auth/reset-password) get bounced to
-  // /dashboard. The recovery flow leaves a session behind on its way to the
-  // reset form, so reset-password has to be reachable while authenticated.
-  // The dashboard layout / admin layout decides where signed-in users
-  // actually belong.
+  // the listed exceptions) get bounced to /dashboard.
+  //   - /auth/callback, /auth/invite, /auth/reset-password — recovery /
+  //     invite flows that legitimately run with a session attached.
+  //   - /auth/confirm — verifyOtp may be called for a still-signed-in user
+  //     (e.g. tapping the email link from a different tab after signup).
+  //   - /auth/sign-out — the whole point is to clear the session; bouncing
+  //     to /dashboard before the route handler runs would defeat it and
+  //     produce a redirect loop when the DAL re-bounces deactivated users.
   if (
     claims &&
     isAuthRoute &&
     !path.startsWith("/auth/callback") &&
     !path.startsWith("/auth/invite") &&
-    !path.startsWith("/auth/reset-password")
+    !path.startsWith("/auth/reset-password") &&
+    !path.startsWith("/auth/confirm") &&
+    !path.startsWith("/auth/sign-out")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
