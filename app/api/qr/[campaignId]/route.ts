@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   request: NextRequest,
-  ctx: RouteContext<"/api/qr/[campaignId]">,
+  { params }: { params: Promise<{ campaignId: string }> },
 ) {
-  const { campaignId } = await ctx.params;
+  const { campaignId } = await params;
   const supabase = await createClient();
 
   const { data, error } = await supabase
