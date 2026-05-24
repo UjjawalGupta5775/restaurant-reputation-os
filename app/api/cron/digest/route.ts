@@ -48,7 +48,7 @@ function lastWeekRange(): { fromIso: string; toIso: string } {
 
 async function resolveAppUrl(): Promise<string> {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL;
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (fromEnv) return fromEnv.trim().replace(/\/+$/, "");
   const h = await headers();
   const proto = h.get("x-forwarded-proto") ?? "https";
   const host = h.get("host") ?? "localhost:3000";

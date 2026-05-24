@@ -77,7 +77,9 @@ async function findBusinessName(businessId: string): Promise<string | null> {
 }
 
 function resolveAppUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000")
+    .trim()
+    .replace(/\/+$/, "");
 }
 
 function resolveFromAddress(): string {

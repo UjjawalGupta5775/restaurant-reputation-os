@@ -123,7 +123,7 @@ export async function inviteOwner(
   let invitedFresh = false;
 
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "") ||
     "http://localhost:3000";
   // Invite email landing routes through our /auth/confirm interstitial
   // page. The page only calls verifyOtp on form POST, not on initial GET,
