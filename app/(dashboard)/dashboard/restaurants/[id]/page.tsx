@@ -93,6 +93,12 @@ export default async function RestaurantDetailPage({
               Edit details
             </Link>
             <Link
+              href={`/dashboard/restaurants/${business.id}/review-prompts`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Review prompts
+            </Link>
+            <Link
               href={`/dashboard/restaurants/${business.id}/billing`}
               className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
             >

@@ -6,6 +6,7 @@ import type { FunnelEvent } from "@/lib/funnel/events";
 import { getSessionId } from "@/lib/funnel/session";
 import { RatingScreen } from "./rating-screen";
 import { DualPathScreen } from "./dual-path-screen";
+import type { FunnelChip } from "./google-review-panel";
 import { ThanksScreen } from "./thanks-screen";
 
 type Business = {
@@ -23,11 +24,20 @@ type Campaign = {
 type Props = {
   business: Business;
   campaign: Campaign;
+  chips: FunnelChip[];
+  chipDisplayMode: "manual" | "random";
+  chipDisplayLimit: number;
 };
 
 type Screen = "rating" | "dual" | "thanks";
 
-export function CustomerFunnel({ business, campaign }: Props) {
+export function CustomerFunnel({
+  business,
+  campaign,
+  chips,
+  chipDisplayMode,
+  chipDisplayLimit,
+}: Props) {
   const [screen, setScreen] = useState<Screen>("rating");
   const [rating, setRating] = useState(0);
   const [thanksPath, setThanksPath] = useState<"google" | "private">(
@@ -102,10 +112,18 @@ export function CustomerFunnel({ business, campaign }: Props) {
         sessionId={sessionId ?? ""}
         rating={rating}
         googleReviewUrl={business.google_review_url}
+        chips={chips}
+        chipDisplayMode={chipDisplayMode}
+        chipDisplayLimit={chipDisplayLimit}
         getElapsedMs={elapsedMs}
         onPublicSelected={() => emit("public_review_selected")}
         onPrivateSelected={() => emit("private_feedback_selected")}
-        onChipClicked={(chip) => emit("prompt_chip_clicked", { chip })}
+        onChipClicked={(chip) =>
+          emit("prompt_chip_clicked", {
+            chip: chip.label,
+            chipId: chip.id,
+          })
+        }
         onCopyClicked={(chars) => emit("copy_clicked", { chars })}
         onRedirectClicked={() => emit("google_redirect_clicked")}
         onFeedbackSubmitted={() => {

@@ -3,7 +3,7 @@
 import { useId, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GoogleReviewPanel } from "./google-review-panel";
+import { GoogleReviewPanel, type FunnelChip } from "./google-review-panel";
 import { PrivateFeedbackPanel } from "./private-feedback-panel";
 
 type Props = {
@@ -12,10 +12,13 @@ type Props = {
   sessionId: string;
   rating: number;
   googleReviewUrl: string | null;
+  chips: FunnelChip[];
+  chipDisplayMode: "manual" | "random";
+  chipDisplayLimit: number;
   getElapsedMs: () => number | null;
   onPublicSelected: () => void;
   onPrivateSelected: () => void;
-  onChipClicked: (chip: string) => void;
+  onChipClicked: (chip: FunnelChip) => void;
   onCopyClicked: (chars: number) => void;
   onRedirectClicked: () => void;
   onFeedbackSubmitted: () => void;
@@ -73,6 +76,9 @@ export function DualPathScreen({
   sessionId,
   rating,
   googleReviewUrl,
+  chips,
+  chipDisplayMode,
+  chipDisplayLimit,
   getElapsedMs,
   onPublicSelected,
   onPrivateSelected,
@@ -87,6 +93,9 @@ export function DualPathScreen({
     <GoogleReviewPanel
       rating={rating}
       googleReviewUrl={googleReviewUrl}
+      chips={chips}
+      displayMode={chipDisplayMode}
+      displayLimit={chipDisplayLimit}
       onFirstInteraction={onPublicSelected}
       onChipClicked={onChipClicked}
       onCopyClicked={onCopyClicked}

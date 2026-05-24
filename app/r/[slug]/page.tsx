@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { getBusinessBySlugPublic } from "@/lib/queries/businesses";
 import { getActiveCampaignBySlugPublic } from "@/lib/queries/campaigns";
+import {
+  getChipSettings,
+  listActiveChipsForCustomer,
+} from "@/lib/queries/review-chips";
 import { CustomerFunnel } from "@/components/funnel/customer-funnel";
 
 export default async function PublicRestaurantPage({
@@ -22,6 +26,11 @@ export default async function PublicRestaurantPage({
 
   if (campaignSlug && !campaign) notFound();
 
+  const [chips, chipSettings] = await Promise.all([
+    listActiveChipsForCustomer(business.id),
+    getChipSettings(business.id),
+  ]);
+
   return (
     <main className="mx-auto flex min-h-svh max-w-3xl flex-col justify-center px-4 py-8">
       <CustomerFunnel
@@ -32,6 +41,9 @@ export default async function PublicRestaurantPage({
           logo_url: business.logo_url,
         }}
         campaign={campaign ? { id: campaign.id, slug: campaign.slug } : null}
+        chips={chips}
+        chipDisplayMode={chipSettings.displayMode}
+        chipDisplayLimit={chipSettings.displayLimit}
       />
     </main>
   );

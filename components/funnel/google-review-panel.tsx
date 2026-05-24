@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { REVIEW_CHIPS } from "@/lib/funnel/chips";
+import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,19 +13,40 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+export type FunnelChip = { id: string; label: string };
+
 type Props = {
   rating: number;
   googleReviewUrl: string | null;
+  chips: FunnelChip[];
+  displayMode: "manual" | "random";
+  displayLimit: number;
   onFirstInteraction: () => void;
-  onChipClicked: (chip: string) => void;
+  onChipClicked: (chip: FunnelChip) => void;
   onCopyClicked: (chars: number) => void;
   onRedirectClicked: () => void;
   className?: string;
 };
 
+// Fisher-Yates — deterministic per call, no external lib. Mutates the copy
+// we pass in so we never touch the prop array.
+function shuffle<T>(items: T[]): T[] {
+  const next = items.slice();
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = next[i];
+    next[i] = next[j];
+    next[j] = tmp;
+  }
+  return next;
+}
+
 export function GoogleReviewPanel({
   rating,
   googleReviewUrl,
+  chips,
+  displayMode,
+  displayLimit,
   onFirstInteraction,
   onChipClicked,
   onCopyClicked,
@@ -39,6 +59,17 @@ export function GoogleReviewPanel({
   const interacted = useRef(false);
   const STARS = [1, 2, 3, 4, 5];
 
+  // Compute the display set once per mount. 'manual' preserves owner
+  // ordering; 'random' shuffles per page load so repeat visitors see
+  // different prompts. Limit is applied after ordering so the count
+  // matches what the owner configured. Memo is keyed on the inputs so
+  // the seeded sequence is stable across re-renders within one screen.
+  const visibleChips = useMemo(() => {
+    const ordered =
+      displayMode === "random" ? shuffle(chips) : chips;
+    return ordered.slice(0, displayLimit);
+  }, [chips, displayMode, displayLimit]);
+
   const flagInteraction = () => {
     if (!interacted.current) {
       interacted.current = true;
@@ -46,14 +77,14 @@ export function GoogleReviewPanel({
     }
   };
 
-  const appendChip = (chip: string) => {
+  const appendChip = (chip: FunnelChip) => {
     flagInteraction();
     onChipClicked(chip);
     setText((prev) => {
       const trimmed = prev.trim();
-      if (!trimmed) return `${chip}.`;
-      if (trimmed.endsWith(".")) return `${trimmed} ${chip}.`;
-      return `${trimmed}. ${chip}.`;
+      if (!trimmed) return `${chip.label}.`;
+      if (trimmed.endsWith(".")) return `${trimmed} ${chip.label}.`;
+      return `${trimmed}. ${chip.label}.`;
     });
   };
 
@@ -142,18 +173,20 @@ export function GoogleReviewPanel({
             </span>
           </div>
         )}
-        <div className="flex flex-wrap gap-2">
-          {REVIEW_CHIPS.map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => appendChip(chip)}
-              className="rounded-full border border-input bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
+        {visibleChips.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {visibleChips.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => appendChip(chip)}
+                className="rounded-full border border-input bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
         <Textarea
           id="google-review-text"
           value={text}
