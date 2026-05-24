@@ -25,7 +25,7 @@ const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SR = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const SUPER_ADMIN_ID = "eb345ea9-babe-4c5d-885d-6dbdee4e9394";
-const SUPER_ADMIN_EMAIL = "bejeya3548@marineso.com";
+const SUPER_ADMIN_EMAIL = process.env.DEMO_OWNER_EMAIL ?? "";
 const EXISTING_BIZ_ID = "3ecb02f6-18ed-4a70-ac2a-d44c3414f2e8"; // Phase 1 Test Bistro
 
 const TEST_OWNER_EMAIL = `step9-owner-${Date.now()}@example.test`;

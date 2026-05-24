@@ -15,7 +15,9 @@ insert into public.app_users (user_id)
 
 ------------------------------------------------------------
 -- 2. Mark the super-admin.
---    eb345ea9-babe-4c5d-885d-6dbdee4e9394 = bejeya3548@marineso.com
+--    The UID below is the seeded demo super-admin for this project; flip
+--    additional accounts via the /admin surface or by updating this row
+--    directly in production.
 ------------------------------------------------------------
 update public.app_users
   set is_super_admin = true
