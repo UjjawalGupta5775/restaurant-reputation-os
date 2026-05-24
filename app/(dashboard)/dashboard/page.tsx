@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionRole } from "@/lib/dal";
 import { listBusinessesForOwner } from "@/lib/queries/businesses";
+import { getSubscriptionForBusiness } from "@/lib/queries/subscriptions";
+import { deriveBanner } from "@/lib/billing/state";
 import {
   Card,
   CardContent,
@@ -10,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { OnboardingForm } from "@/components/dashboard/onboarding-form";
+import { BillingBanner } from "@/components/dashboard/billing-banner";
 
 export default async function DashboardPage() {
   const session = await getSessionRole();
@@ -57,8 +60,38 @@ export default async function DashboardPage() {
     );
   }
 
+  // Multi-restaurant owner: surface any operational billing problems at the
+  // top so they aren't trapped behind clicking into each restaurant. Healthy
+  // subscriptions render nothing. Single-restaurant owners are auto-redirected
+  // to their detail page above, so this stacked banner area is multi-only.
+  const banners = await Promise.all(
+    businesses.map(async (b) => {
+      const sub = await getSubscriptionForBusiness(b.id);
+      const banner = deriveBanner(sub);
+      return banner ? { business: b, banner } : null;
+    }),
+  );
+  const activeBanners = banners.filter((x): x is NonNullable<typeof x> => x !== null);
+
   return (
     <div className="space-y-10">
+      {activeBanners.length > 0 && (
+        <div className="space-y-3">
+          {activeBanners.map(({ business, banner }) => (
+            <div key={business.id} className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                {business.name}
+              </p>
+              <BillingBanner
+                banner={banner}
+                businessId={business.id}
+                returnPath="/dashboard"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       <header className="space-y-2">
         <h1 className="font-serif text-3xl tracking-tight">Your restaurants</h1>
         <p className="text-sm text-muted-foreground">

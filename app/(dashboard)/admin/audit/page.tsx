@@ -14,6 +14,17 @@ const ACTION_LABELS: Record<string, string> = {
   campaign_created: "Campaign created",
   owner_invited: "Owner invited",
   owner_removed: "Owner removed",
+  subscription_created: "Subscription created",
+  subscription_updated: "Subscription updated",
+  subscription_canceled: "Subscription canceled",
+  subscription_resumed: "Subscription resumed",
+  subscription_expired: "Subscription expired",
+  subscription_paused: "Subscription paused",
+  subscription_unpaused: "Subscription unpaused",
+  subscription_payment_failed: "Payment failed",
+  subscription_payment_recovered: "Payment recovered",
+  subscription_admin_override_set: "Admin override set",
+  subscription_admin_override_cleared: "Admin override cleared",
 };
 
 function labelFor(action: string): string {

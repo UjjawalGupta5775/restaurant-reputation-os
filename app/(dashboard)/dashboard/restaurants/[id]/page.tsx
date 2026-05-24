@@ -13,6 +13,8 @@ import {
   getRestaurantKpis,
 } from "@/lib/queries/analytics";
 import { parsePeriod, periodLabel } from "@/lib/queries/period";
+import { getSubscriptionForBusiness } from "@/lib/queries/subscriptions";
+import { deriveBanner } from "@/lib/billing/state";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { KpiStrip } from "@/components/dashboard/kpi-strip";
@@ -21,6 +23,7 @@ import { DailyScansChart } from "@/components/dashboard/daily-scans-chart";
 import { FunnelSpeed } from "@/components/dashboard/funnel-speed";
 import { AnalyticsPeriodPicker } from "@/components/dashboard/analytics-period-picker";
 import { RestaurantSwitcher } from "@/components/dashboard/restaurant-switcher";
+import { BillingBanner } from "@/components/dashboard/billing-banner";
 
 export default async function RestaurantDetailPage({
   params,
@@ -39,16 +42,27 @@ export default async function RestaurantDetailPage({
   const business = await getBusinessByIdForOwner(id);
   if (!business) notFound();
 
-  const [campaigns, kpis, daily, timing, restaurants] = await Promise.all([
-    listCampaignsForBusiness(id),
-    getRestaurantKpis(id, period),
-    getDailyScans(id, period),
-    getFunnelTiming(id, period),
-    listBusinessesForOwner(),
-  ]);
+  const [campaigns, kpis, daily, timing, restaurants, subscription] =
+    await Promise.all([
+      listCampaignsForBusiness(id),
+      getRestaurantKpis(id, period),
+      getDailyScans(id, period),
+      getFunnelTiming(id, period),
+      listBusinessesForOwner(),
+      getSubscriptionForBusiness(id),
+    ]);
+  const banner = deriveBanner(subscription);
 
   return (
     <div className="space-y-10">
+      {banner && (
+        <BillingBanner
+          banner={banner}
+          businessId={business.id}
+          returnPath={`/dashboard/restaurants/${business.id}`}
+        />
+      )}
+
       <div>
         <RestaurantSwitcher
           restaurants={restaurants}
@@ -77,6 +91,12 @@ export default async function RestaurantDetailPage({
               className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
             >
               Edit details
+            </Link>
+            <Link
+              href={`/dashboard/restaurants/${business.id}/billing`}
+              className="rounded-sm text-muted-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-1"
+            >
+              Billing
             </Link>
             <Link
               href={`/dashboard/restaurants/${business.id}/feedback`}

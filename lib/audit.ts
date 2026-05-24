@@ -19,7 +19,18 @@ export type AuditAction =
   | "business_updated"
   | "business_logo_updated"
   | "business_logo_cleared"
-  | "campaign_created";
+  | "campaign_created"
+  | "subscription_created"
+  | "subscription_updated"
+  | "subscription_canceled"
+  | "subscription_resumed"
+  | "subscription_expired"
+  | "subscription_paused"
+  | "subscription_unpaused"
+  | "subscription_payment_failed"
+  | "subscription_payment_recovered"
+  | "subscription_admin_override_set"
+  | "subscription_admin_override_cleared";
 
 export async function recordAudit(params: {
   actorUserId: string | null;
