@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { verifySession } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { DigestToggleForm } from "@/components/dashboard/digest-toggle-form";
@@ -30,31 +29,16 @@ export default async function SettingsPage() {
   const enabled = await loadEnabled(session.userId);
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="font-serif text-3xl tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your email notifications.
-        </p>
-      </header>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-serif text-xl">Email</CardTitle>
-          <CardDescription>
-            Choose what we send to {session.email ?? "your account"}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DigestToggleForm initialEnabled={enabled} />
-        </CardContent>
-      </Card>
-
-      <p className="text-sm text-muted-foreground">
-        <Link href="/dashboard" className="underline">
-          Back to dashboard
-        </Link>
-      </p>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-serif text-xl">Email</CardTitle>
+        <CardDescription>
+          Choose what we send to {session.email ?? "your account"}.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <DigestToggleForm initialEnabled={enabled} />
+      </CardContent>
+    </Card>
   );
 }
